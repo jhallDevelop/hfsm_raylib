@@ -31,17 +31,13 @@ PLATFORM              ?= PLATFORM_DESKTOP
 # Define project variables
 PROJECT_NAME          ?= raylib_game
 PROJECT_VERSION       ?= 1.0
-PROJECT_BUILD_PATH    ?= .
+PROJECT_BUILD_PATH    ?= ./bin
 PROJECT_SOURCE_FILES  ?= \
-    raylib_game.c \
-    screen_logo.c \
-    screen_title.c \
-    screen_options.c \
-    screen_gameplay.c \
-    screen_ending.c
+    raylib_game.cpp 
+    
 
 # raylib library variables
-RAYLIB_SRC_PATH       ?= /Users/ak76/Projects/SDK/raylib/src#../../raylib/src
+RAYLIB_SRC_PATH       ?= /Users/ak76/Projects/SDK/raylib/src#../../raylib/src # !!!! Replace with your raylib source path
 RAYLIB_INCLUDE_PATH   ?= $(RAYLIB_SRC_PATH)
 RAYLIB_LIB_PATH       ?= $(RAYLIB_SRC_PATH)
 
@@ -49,7 +45,7 @@ RAYLIB_LIB_PATH       ?= $(RAYLIB_SRC_PATH)
 RAYLIB_LIBTYPE        ?= STATIC
 
 # Define compiler path on Windows
-COMPILER_PATH         ?= /usr/bin #C:\raylib\w64devkit\bin
+COMPILER_PATH         ?= /usr/bin #C:\raylib\w64devkit\bin # !!!! Replace with your compiler path
 
 # Build mode for project: DEBUG or RELEASE
 BUILD_MODE            ?= RELEASE
@@ -142,11 +138,13 @@ endif
 # Define default C compiler: CC
 #------------------------------------------------------------------------------------------------
 CC = gcc
+CXX = g++
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         # OSX default compiler
         CC = clang
+        CXX = clang++
     endif
     ifeq ($(PLATFORM_OS),BSD)
         # FreeBSD, OpenBSD, NetBSD, DragonFly default compiler
@@ -190,22 +188,29 @@ endif
 #  -Wno-unused-value    ignore unused return values of some functions (i.e. fread())
 #  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
 CFLAGS = -std=c99 -Wall -Wno-missing-braces -Wno-unused-value -Wno-pointer-sign -D_DEFAULT_SOURCE $(PROJECT_CUSTOM_FLAGS)
+CXXFLAGS = -std=c++17 -Wall -Wno-missing-braces -Wno-unused-value -Wno-pointer-sign -D_DEFAULT_SOURCE $(PROJECT_CUSTOM_FLAGS)
+
 #CFLAGS += -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
 ifeq ($(BUILD_MODE),DEBUG)
     CFLAGS += -g -D_DEBUG
+    CXXFLAGS += -g -D_DEBUG
 else
     ifeq ($(PLATFORM),PLATFORM_WEB)
         ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
             CFLAGS += -O3
+            CXXFLAGS += -O3
         else
             CFLAGS += -Os
+            CXXFLAGS += -Os
         endif
     else
         ifeq ($(PLATFORM_OS),OSX)
             CFLAGS += -O2
+            CXXFLAGS += -O2
         else
             CFLAGS += -s -O2
+            CXXFLAGS += -s -O2
         endif
     endif
 endif
@@ -374,6 +379,16 @@ $(PROJECT_NAME): $(OBJS)
 # NOTE: This pattern will compile every module defined on $(OBJS)
 %.o: %.c
 	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
+
+
+# Project target defined by PROJECT_NAME
+$(PROJECT_NAME): $(OBJS)
+	$(CXX) -o $(PROJECT_BUILD_PATH)/$(PROJECT_NAME)$(EXT) $(OBJS) $(CXXFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+# Compile source files
+# NOTE: This pattern will compile every module defined on $(OBJS)
+%.o: %.cpp
+	$(CXX) -c $< -o $@ $(CXXFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
 
 .PHONY: clean_shell_cmd clean_shell_sh
 
