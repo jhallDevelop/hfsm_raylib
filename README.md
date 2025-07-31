@@ -12,6 +12,10 @@ This template has been created to be used with raylib (www.raylib.com) and it's 
 
 _Copyright (c) 2014-2025 Ramon Santamaria ([@raysan5](https://twitter.com/raysan5))_
 
+Run the project  
+python -m http.server 8080
+
+
 -----------------------------------
 ## Getting Started with this example
 

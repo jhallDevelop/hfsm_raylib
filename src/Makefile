@@ -33,8 +33,16 @@ PROJECT_NAME          ?= raylib_game
 PROJECT_VERSION       ?= 1.0
 PROJECT_BUILD_PATH    ?= ./bin
 PROJECT_SOURCE_FILES  ?= \
-    raylib_game.cpp 
-    
+    raylib_game.cpp \
+    Actor.cpp \
+    Pawn.cpp \
+    Weapon.cpp \
+    AI/AI_HFSM.cpp \
+    AI/AI_State_Seek.cpp \
+    AI/AI_State_Wander.cpp \
+    AI/AI_State_Attack.cpp \
+    AI/AI_State_Reload.cpp \
+    AI/AI_State_Shoot.cpp
 
 # raylib library variables
 RAYLIB_SRC_PATH       ?= /Users/ak76/Projects/SDK/raylib/src#../../raylib/src # !!!! Replace with your raylib source path
@@ -188,7 +196,7 @@ endif
 #  -Wno-unused-value    ignore unused return values of some functions (i.e. fread())
 #  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
 CFLAGS = -std=c99 -Wall -Wno-missing-braces -Wno-unused-value -Wno-pointer-sign -D_DEFAULT_SOURCE $(PROJECT_CUSTOM_FLAGS)
-CXXFLAGS = -std=c++17 -Wall -Wno-missing-braces -Wno-unused-value -Wno-pointer-sign -D_DEFAULT_SOURCE $(PROJECT_CUSTOM_FLAGS)
+CXXFLAGS = -std=c++17 -g -Wall -Wno-missing-braces -Wno-unused-value -Wno-pointer-sign -D_DEFAULT_SOURCE $(PROJECT_CUSTOM_FLAGS)
 
 #CFLAGS += -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
