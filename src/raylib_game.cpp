@@ -42,7 +42,7 @@ typedef struct GameData {
     // Font
     Font font;
 } GameData;
-
+std::unique_ptr<GameData> gameData;
 //----------------------------------------------------------------------------------
 // Local Functions Declaration
 //----------------------------------------------------------------------------------
@@ -51,7 +51,7 @@ void Draw(const GameData& _gameData);      // Draw gameplay screen
 void UpdateInput(Pawn& _pawn); // Update pawn input
 void UpdateAI(GameData& _gameData);
 void UpdatePawns(GameData& _gameData);
-
+void GameUpdate(); // Update game logic
 
 
 //----------------------------------------------------------------------------------
@@ -64,10 +64,9 @@ int main(void)
     // Initialization
     //---------------------------------------------------------
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, GAME_TITLE); // Initialize window and OpenGL context
-
     
     // Create a space for the game data on the heap
-    std::unique_ptr<GameData> gameData = std::make_unique<GameData>();
+    gameData = std::make_unique<GameData>();
 
     // Create the player pawn, enemy pawn, and AI state machine on the heap
     gameData->playerPawn = std::make_unique<Pawn>();
@@ -101,7 +100,8 @@ int main(void)
     Font* font = &gameData.get()->font; // Get a pointer to the font
 
 #if defined(PLATFORM_WEB)
-    emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
+    //emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
+    emscripten_set_main_loop(GameUpdate, 60, 1);
 #else
     SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -110,30 +110,7 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
-        // --- LOGIC PHASE 1: INPUT ---
-        // Calculate the player's desired force for this frame.
-        UpdateInput(*playerPawn);
-
-        // --- DRAWING & LOGIC PHASE ---
-        BeginDrawing(); // Raylib function to start drawing
-        ClearBackground(RAYWHITE);  // Raylib function to clear the background
-
-            // --- LOGIC PHASE 2: AI (with Debug Drawing) ---
-        // The AI calculates its force and can draw debug visuals.
-        // This must happen before the physics update.
-        enemyAIStateMachine->Update(*enemyPawn, *playerPawn);
-
-        // --- LOGIC PHASE 3: PHYSICS ---
-        // Now that all forces for this frame are known (from Input and AI),
-        // we apply them to update the pawn positions and velocities.
-        // This must happen after AI and before the final render.
-        UpdatePawns(*gameData.get());
-
-        // --- RENDER PHASE ---
-        // Draw the final, updated state of the world.
-        Draw(*gameData.get());
-
-        EndDrawing();   // Raylib function to finish drawing
+        GameUpdate(); // Update game logic
     }
 #endif
 
@@ -169,7 +146,6 @@ void Draw(const GameData& _gameData){
     
     // render enemy pawn
     _gameData.enemyPawn->Render();
-    
 }
 
 
@@ -190,6 +166,33 @@ void UpdatePawns(GameData& _gameData)
     _gameData.enemyPawn->Update();
 }
 
+void GameUpdate()
+{
+    // --- LOGIC PHASE 1: INPUT ---
+    // Calculate the player's desired force for this frame.
+    UpdateInput(*gameData.get()->playerPawn); // Update player pawn input
+
+    // --- DRAWING & LOGIC PHASE ---
+    BeginDrawing(); // Raylib function to start drawing
+    ClearBackground(RAYWHITE);  // Raylib function to clear the background
+
+    // --- LOGIC PHASE 2: AI (with Debug Drawing) ---
+    // The AI calculates its force and can draw debug visuals.
+    // This must happen before the physics update.
+    gameData.get()->enemyAIStateMachine->Update(*gameData.get()->enemyPawn, *gameData.get()->playerPawn);
+
+    // --- LOGIC PHASE 3: PHYSICS ---
+    // Now that all forces for this frame are known (from Input and AI),
+    // we apply them to update the pawn positions and velocities.
+    // This must happen after AI and before the final render.
+    UpdatePawns(*gameData.get());
+
+    // --- RENDER PHASE ---
+    // Draw the final, updated state of the world.
+    Draw(*gameData.get());
+
+    EndDrawing();   // Raylib function to finish drawing
+}
 
 // Helper function to update player pawn based on input
 void UpdateInput(Pawn& _pawn)

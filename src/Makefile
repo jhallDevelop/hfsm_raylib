@@ -164,6 +164,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # WARNING: To compile to HTML5, code must be redesigned
     # to use emscripten.h and emscripten_set_main_loop()
     CC = emcc
+    CXX = em++
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
     ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
