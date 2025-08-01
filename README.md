@@ -1,35 +1,13 @@
------------------------------------
-
-Welcome to **Hierarchical Finite State Machine (HFSM) example**!
-
-This example provides a worked example in c++ of how a hierarchical finite state machine might work. 
-
-
-The repo built on the Raylib ([template example](https://github.com/raysan5/raylib-game-template)). Therefore it is also pre-configured with a default `LICENSE` (zlib/libpng) and a `README.md` (this one) to be properly filled by users. Feel free to change the LICENSE as required.
-
-
-This template has been created to be used with raylib (www.raylib.com) and it's licensed under an unmodified zlib/libpng license.
-_Copyright (c) 2014-2025 Ramon Santamaria ([@raysan5](https://twitter.com/raysan5))_
-
-The HFSM project is built by mr_J05H (jhall.develop)
-
-Run the project locally
-cd into the root directory of ./docs folder
-Run the command 
-python -m http.server 8080
-
-or upload to your own webserver 
-
-
------------------------------------
-
 # C++ Hierarchical Finite State Machine (HFSM) Example
 
 This project provides a practical C++ example of a Hierarchical Finite State Machine (HFSM) using the raylib library. It demonstrates how AI states can be nested and managed for game characters.
 
 ![HFSM Screenshot](screenshots/screenshot000.png)
 
+([demo](https://jhalldevelop.github.io/hfsm_raylib))
+
 This project is built upon the [raylib game template](https://github.com/raysan5/raylib-game-template).
+
 
 ---
 
@@ -82,6 +60,8 @@ make PLATFORM=PLATFORM_DESKTOP -B -e
 > **Note:** The `-B` flag forces a complete rebuild of all files, which is useful to ensure a clean build. The `-e` flag allows environment variables to override Makefile variables.
 
 ---
+## Running the Desktop Build Locally
+Just start the .exe or binary from the `src/bin` folder.  
 
 ## Running the Web Build Locally
 
@@ -92,7 +72,7 @@ After building for the web, a `.html` file will be created. You can run it local
     ```bash
     python -m http.server 8080
     ```
-3.  Open your web browser and go to `http://localhost:8080/your_game.html`.
+3.  Open your web browser and go to ([localhost:8080](http://localhost:8080/)).
 
 ---
 
