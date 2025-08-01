@@ -52,7 +52,7 @@ void UpdateInput(Pawn& _pawn); // Update pawn input
 void UpdateAI(GameData& _gameData);
 void UpdatePawns(GameData& _gameData);
 void GameUpdate(); // Update game logic
-
+void WrapPawnPosition(Pawn& _pawn); // Wrap pawn position to screen bounds
 
 //----------------------------------------------------------------------------------
 // Main entry point
@@ -164,6 +164,9 @@ void UpdatePawns(GameData& _gameData)
     // Update player pawn
     _gameData.playerPawn->Update();
     _gameData.enemyPawn->Update();
+
+    WrapPawnPosition(*_gameData.playerPawn); // Wrap player pawn position to screen bounds
+    WrapPawnPosition(*_gameData.enemyPawn); // Wrap enemy pawn position to screen bounds
 }
 
 void GameUpdate()
@@ -192,6 +195,19 @@ void GameUpdate()
     Draw(*gameData.get());
 
     EndDrawing();   // Raylib function to finish drawing
+}
+
+void WrapPawnPosition(Pawn &_pawn)
+{
+    // Wrap pawn position to screen bounds
+    Vector2 pos = _pawn.GetPosition();
+    if (pos.x < 0) pos.x = SCREEN_WIDTH;
+    else if (pos.x > SCREEN_WIDTH) pos.x = 0;
+
+    if (pos.y < 0) pos.y = SCREEN_HEIGHT;
+    else if (pos.y > SCREEN_HEIGHT) pos.y = 0;
+
+    _pawn.SetPosition(pos); // Set the wrapped position back to the pawn
 }
 
 // Helper function to update player pawn based on input
