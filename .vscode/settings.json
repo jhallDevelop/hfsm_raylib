@@ -1,0 +1,19 @@
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/*.o": true,
+        "**/*.exe": true
+    },
+    "terminal.integrated.profiles.windows": {
+        "raylib-devkit": {
+            "path": "C:\\raylib\\w64devkit\\w64devkit.exe",
+            "icon": "tools"
+        }
+    },
+    "terminal.integrated.defaultProfile.windows": "raylib-devkit",
+    "terminal.integrated.cwd": ""
+}
