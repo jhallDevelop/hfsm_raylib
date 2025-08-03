@@ -45,7 +45,7 @@ PROJECT_SOURCE_FILES  ?= \
     AI/AI_State_Shoot.cpp
 
 # raylib library variables
-RAYLIB_SRC_PATH       ?= /Users/ak76/Projects/SDK/raylib/src#../../raylib/src # !!!! Replace with your raylib source path
+RAYLIB_SRC_PATH       ?= C:/raylib/raylib/src#/Users/ak76/Projects/SDK/raylib/src#../../raylib/src # !!!! Replace with your raylib source path
 RAYLIB_INCLUDE_PATH   ?= $(RAYLIB_SRC_PATH)
 RAYLIB_LIB_PATH       ?= $(RAYLIB_SRC_PATH)
 
@@ -53,7 +53,7 @@ RAYLIB_LIB_PATH       ?= $(RAYLIB_SRC_PATH)
 RAYLIB_LIBTYPE        ?= STATIC
 
 # Define compiler path on Windows
-COMPILER_PATH         ?= /usr/bin #C:\raylib\w64devkit\bin # !!!! Replace with your compiler path
+COMPILER_PATH         ?= C:\raylib\w64devkit\bin #/usr/bin # !!!! Replace with your compiler path
 
 # Build mode for project: DEBUG or RELEASE
 BUILD_MODE            ?= RELEASE
@@ -197,7 +197,7 @@ endif
 #  -Wno-unused-value    ignore unused return values of some functions (i.e. fread())
 #  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
 CFLAGS = -std=c99 -Wall -Wno-missing-braces -Wno-unused-value -Wno-pointer-sign -D_DEFAULT_SOURCE $(PROJECT_CUSTOM_FLAGS)
-CXXFLAGS = -std=c++17 -g -Wall -Wno-missing-braces -Wno-unused-value -Wno-pointer-sign -D_DEFAULT_SOURCE $(PROJECT_CUSTOM_FLAGS)
+CXXFLAGS = -std=c++17 -g -Wall -Wno-missing-braces -Wno-unused-value -D_DEFAULT_SOURCE $(PROJECT_CUSTOM_FLAGS)
 
 #CFLAGS += -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
@@ -362,7 +362,8 @@ endif
 
 # Define all object files from source files
 #------------------------------------------------------------------------------------------------
-OBJS = $(patsubst %.c, %.o, $(PROJECT_SOURCE_FILES))
+OBJS = $(addsuffix .o, $(basename $(PROJECT_SOURCE_FILES)))
+#OBJS = $(patsubst %.c, %.o, $(PROJECT_SOURCE_FILES))
 
 # Define processes to execute
 #------------------------------------------------------------------------------------------------
