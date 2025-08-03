@@ -32,17 +32,11 @@ PLATFORM              ?= PLATFORM_DESKTOP
 PROJECT_NAME          ?= raylib_game
 PROJECT_VERSION       ?= 1.0
 PROJECT_BUILD_PATH    ?= ./bin
-PROJECT_SOURCE_FILES  ?= \
-    raylib_game.cpp \
-    Actor.cpp \
-    Pawn.cpp \
-    Weapon.cpp \
-    AI/AI_HFSM.cpp \
-    AI/AI_State_Seek.cpp \
-    AI/AI_State_Wander.cpp \
-    AI/AI_State_Attack.cpp \
-    AI/AI_State_Reload.cpp \
-    AI/AI_State_Shoot.cpp
+PROJECT_SOURCE_FILES  ?= $(wildcard *.cpp *.c \
+                            src/*.cpp src/*.c \
+                            AI/*.c AI/*.cpp \
+                            AI/pathfinding/*.c AI/pathfinding/*.cpp \
+                            AI/state_machine/*.c AI/state_machine/*.cpp);
 
 # raylib library variables
 RAYLIB_SRC_PATH       ?= C:/raylib/raylib/src#/Users/ak76/Projects/SDK/raylib/src#../../raylib/src # !!!! Replace with your raylib source path
