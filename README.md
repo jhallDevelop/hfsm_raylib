@@ -43,15 +43,35 @@ Before you begin, you **must** have the raylib library set up and working correc
 
 ### 2. Build the Project
 
-This project uses a `Makefile` to simplify compilation. Navigate to the project's root directory in your terminal and run one of the following commands.
+This project uses a `Makefile` to simplify compilation. Navigate to the project's root directory in your terminal and run one of the following commands.  
+Ensure you have edited the parts of the makefile highlighted with 
+```bash
+# !!!! Replace with your raylib source path  
+e.g.
+RAYLIB_SRC_PATH ?= C:/raylib/raylib/src  # !!!! Replace with your raylib source path
+```  
 
-**Build for Web (HTML5)**
+**Building on Windows**  
+As per the raylib instructions, its important you use the compatible mingw32 version i.e.
+w64devkit.exe likely installed in path   
+C:\raylib\w64devkit\w64devkit.exe
+Example build command for windows Desktop would be   
+```bash
+mingw32-make PLATFORM=PLATFORM_DESKTOP
+```
+If using VsCode on windows, its likely your default VsCode terminal won't be using this special version of mingw32. Please configure your VsCode terminal to use this version.  
 
+**Building on Linux/OSX**  
+Just use make as per usual.  
+
+
+
+**Build Command for Web (HTML5)**
 ```bash
 make PLATFORM=PLATFORM_WEB BUILD_WEB_RESOURCES=TRUE -B -e
 ```
 
-**Build for Desktop**
+**Build command for Desktop**
 
 ```bash
 make PLATFORM=PLATFORM_DESKTOP -B -e
