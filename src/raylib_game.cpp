@@ -12,9 +12,11 @@
 *
 ********************************************************************************************/
 #include <memory>   // For smart pointers
+#include <iostream>
 #include "raylib.h"
 #include "Pawn.h"
-#include "AI/AI_HFSM.h"
+#include "AI/state_machine/AI_HFSM.h"
+#include "AI/pathfinding/BFS.h"
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
@@ -39,6 +41,7 @@ typedef struct GameData {
     std::unique_ptr<AI_HSFM> enemyAIStateMachine; // AI state machine
     std::unique_ptr<Weapon> playerWeapon; // Player's weapon
     std::unique_ptr<Weapon> enemyWeapon; // Enemy's weapon (if needed)
+    std::unique_ptr<BFS> pathfinding; // Pathfinding algorithm (if needed)
     // Font
     Font font;
 } GameData;
@@ -53,6 +56,8 @@ void UpdateAI(GameData& _gameData);
 void UpdatePawns(GameData& _gameData);
 void GameUpdate(); // Update game logic
 void WrapPawnPosition(Pawn& _pawn); // Wrap pawn position to screen bounds
+
+
 
 //----------------------------------------------------------------------------------
 // Main entry point
@@ -99,6 +104,24 @@ int main(void)
     gameData.get()->font = LoadFont(FONT_FILE_PATH);
     Font* font = &gameData.get()->font; // Get a pointer to the font
 
+    // setup the pathfinding algorithm
+    int const gridSize = 20; // Example grid width
+    int const randomObstacleCount = 250; // Number of random obstacles to create
+    gameData->pathfinding = std::make_unique<BFS>(SCREEN_WIDTH/gridSize, SCREEN_HEIGHT/gridSize, gridSize);
+    std::cout << "Pathfinding algorithm initialized." << std::endl;
+    BFS* bfs = gameData->pathfinding.get();
+    if (bfs == nullptr) {
+        TraceLog(LOG_ERROR, "Failed to cast pathfinding to BFS");
+        return -1; // Exit if casting fails
+    }
+    
+    bfs->CreateRandomObstacles(randomObstacleCount); // Create random obstacles in the grid
+    // pick a random start and end node for the pathfinding algorithm
+    int startNodeIndex[2] = { GetRandomValue(0, SCREEN_WIDTH/gridSize - 1), GetRandomValue(0, SCREEN_HEIGHT/gridSize - 1) };
+    int endNodeIndex[2] = { GetRandomValue(0, SCREEN_WIDTH/gridSize - 1), GetRandomValue(0, SCREEN_HEIGHT/gridSize - 1) };
+    bfs->OnStart(startNodeIndex, endNodeIndex); // Initialize the pathfinding algorithm
+    
+
 #if defined(PLATFORM_WEB)
     //emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
     emscripten_set_main_loop(GameUpdate, 60, 1);
@@ -133,6 +156,11 @@ int main(void)
 // draw UI and gameplay elements
 // ----------------------------------------------------------------------------------
 void Draw(const GameData& _gameData){
+
+    // render the pathfinding
+    _gameData.pathfinding->OnRender(); // Render the pathfinding grid
+
+
     // TODO: Draw gameplay text
     Vector2 titlePos = { 20, 10 };
     Vector2 descriptionPos = { 20, 60 };
@@ -141,11 +169,15 @@ void Draw(const GameData& _gameData){
     DrawTextEx(_gameData.font, GAME_DESCRIPTION, descriptionPos, _gameData.font.baseSize*1.0f, 4, BLACK);
     DrawTextEx(_gameData.font, _gameData.enemyAIStateMachine.get()->GetCurrentState()->GetStateName(), statePos, _gameData.font.baseSize*1.0f, 4, BLACK);
     
+    
+
     // Render player pawn
     _gameData.playerPawn->Render();
     
     // render enemy pawn
     _gameData.enemyPawn->Render();
+
+    
 }
 
 
@@ -209,6 +241,8 @@ void WrapPawnPosition(Pawn &_pawn)
 
     _pawn.SetPosition(pos); // Set the wrapped position back to the pawn
 }
+
+
 
 // Helper function to update player pawn based on input
 void UpdateInput(Pawn& _pawn)
