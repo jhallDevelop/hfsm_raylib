@@ -32,7 +32,8 @@ void BFS::OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2])
     Node& endNode = nodeVector->at(_nodeIndexEnd[0]).at(_nodeIndexEnd[1]); // Example: ending node
     //endNode.visited = true; // Mark the end node as visited
     endNode.isPath = true; // Mark the start node as part of the path
-    
+    endNode.isObstacle = false; // Ensure the start node is not an obstacle 
+    endNode.visited = false; // Ensure the end node is not visited
 
     BreadthFirstSearch(startNode, endNode);
 }
