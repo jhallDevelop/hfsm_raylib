@@ -1,10 +1,10 @@
 #pragma once
 #include "Pathfinding.h"
 #include "Node.h"
-class BFS : public Pathfinding {
+class DFS : public Pathfinding {
 public:
-    BFS(int _gridWidth, int _gridHeight, int _gridSize);
-    ~BFS() override;
+    DFS(int _gridWidth, int _gridHeight, int _gridSize);
+    ~DFS() override;
 
     void OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2]) override;
     void OnUpdate() const override;
@@ -14,7 +14,7 @@ public:
     int GetGridHeight() const;
     void SetGridSize(int width, int height);
     void CreateRandomObstacles(int obstacleCount) override;
-    void BreadthFirstSearch(Node& _startNode, Node& _endNode);
+    void DepthFirstSearch(Node& _startNode, Node& _endNode);
     
 private:
     std::unique_ptr<std::vector<std::vector<Node>>> nodeVector;

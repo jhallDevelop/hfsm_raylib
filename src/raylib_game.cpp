@@ -17,10 +17,12 @@
 #include "Pawn.h"
 #include "AI/state_machine/AI_HFSM.h"
 #include "AI/pathfinding/BFS.h"
+#include "AI/pathfinding/DFS.h"
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
 #endif
+
 
 
 //----------------------------------------------------------------------------------
@@ -30,6 +32,12 @@ static const int SCREEN_WIDTH = 800;
 static const int SCREEN_HEIGHT = 450;
 const char* GAME_TITLE = "HFSM Example"; // Game title
 const char* GAME_DESCRIPTION = "W, A, S, D to Move"; // Game description
+enum PathfindingType {
+    BFS_TYPE,
+    DFS_TYPE,
+    DIYKSTRA_TYPE,
+    A_STAR_TYPE
+};
 
 // Assets
 const char* FONT_FILE_PATH = "resources/mecha.png"; // Font file path
@@ -41,9 +49,10 @@ typedef struct GameData {
     std::unique_ptr<AI_HSFM> enemyAIStateMachine; // AI state machine
     std::unique_ptr<Weapon> playerWeapon; // Player's weapon
     std::unique_ptr<Weapon> enemyWeapon; // Enemy's weapon (if needed)
-    std::unique_ptr<BFS> pathfinding; // Pathfinding algorithm (if needed)
+    std::unique_ptr<Pathfinding> pathfinding; // Pathfinding algorithm (if needed)
     // Font
     Font font;
+    PathfindingType pathFindingType;
 } GameData;
 std::unique_ptr<GameData> gameData;
 //----------------------------------------------------------------------------------
@@ -107,19 +116,42 @@ int main(void)
     // setup the pathfinding algorithm
     int const gridSize = 20; // Example grid width
     int const randomObstacleCount = 250; // Number of random obstacles to create
-    gameData->pathfinding = std::make_unique<BFS>(SCREEN_WIDTH/gridSize, SCREEN_HEIGHT/gridSize, gridSize);
+
+
+    // ==============  Pathfinding  ================
+    gameData.get()->pathFindingType = PathfindingType::DFS_TYPE;
+    switch (gameData.get()->pathFindingType)
+    {
+    case PathfindingType::BFS_TYPE:
+        gameData->pathfinding = std::make_unique<BFS>(SCREEN_WIDTH/gridSize, SCREEN_HEIGHT/gridSize, gridSize);
+        break;
+
+    case PathfindingType::DFS_TYPE:
+        gameData->pathfinding = std::make_unique<DFS>(SCREEN_WIDTH/gridSize, SCREEN_HEIGHT/gridSize, gridSize);
+        break;
+
+    case PathfindingType::DIYKSTRA_TYPE:
+        // gameData->pathfinding = std::make_unique<Dijkstra>(SCREEN_WIDTH/gridSize, SCREEN_HEIGHT/gridSize, gridSize);
+        break;
+
+    case PathfindingType::A_STAR_TYPE:
+        // gameData->pathfinding = std::make_unique<AStar>(SCREEN_WIDTH/gridSize, SCREEN_HEIGHT/gridSize, gridSize);
+        break;
+    
+    }
+    
     std::cout << "Pathfinding algorithm initialized." << std::endl;
-    BFS* bfs = gameData->pathfinding.get();
-    if (bfs == nullptr) {
-        TraceLog(LOG_ERROR, "Failed to cast pathfinding to BFS");
+    Pathfinding* pathfinding = gameData->pathfinding.get();
+    if (pathfinding == nullptr) {
+        TraceLog(LOG_ERROR, "Failed to cast pathfinding to pathfinding");
         return -1; // Exit if casting fails
     }
     
-    bfs->CreateRandomObstacles(randomObstacleCount); // Create random obstacles in the grid
+    pathfinding->CreateRandomObstacles(randomObstacleCount); // Create random obstacles in the grid
     // pick a random start and end node for the pathfinding algorithm
     int startNodeIndex[2] = { GetRandomValue(0, SCREEN_WIDTH/gridSize - 1), GetRandomValue(0, SCREEN_HEIGHT/gridSize - 1) };
     int endNodeIndex[2] = { GetRandomValue(0, SCREEN_WIDTH/gridSize - 1), GetRandomValue(0, SCREEN_HEIGHT/gridSize - 1) };
-    bfs->OnStart(startNodeIndex, endNodeIndex); // Initialize the pathfinding algorithm
+    pathfinding->OnStart(startNodeIndex, endNodeIndex); // Initialize the pathfinding algorithm
     
 
 #if defined(PLATFORM_WEB)

@@ -1,10 +1,10 @@
 #include <memory>
 #include <queue>
 #include "raylib.h"
-#include "BFS.h"
+#include "DFS.h"
 #include <iostream>
 
-BFS::BFS(int _gridWidth, int _gridHeight, int _gridSize) : gridWidth(_gridWidth), gridHeight(_gridHeight), gridSize(_gridSize)
+DFS::DFS(int _gridWidth, int _gridHeight, int _gridSize) : gridWidth(_gridWidth), gridHeight(_gridHeight), gridSize(_gridSize)
 {
     // Initialize the node grid
     nodeVector = std::make_unique<std::vector<std::vector<Node>>>();
@@ -12,15 +12,15 @@ BFS::BFS(int _gridWidth, int _gridHeight, int _gridSize) : gridWidth(_gridWidth)
     Node::CreateNodeGrid(nodeVector.get(), gridWidth, gridHeight);
 }
 
-BFS::~BFS()
+DFS::~DFS()
 {
 }
 
-void BFS::OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2])
+void DFS::OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2])
 {
     // Convert start and end positions to Node objects
-    
-    // Call the BFS algorithm starting from the startNode
+    std::cout << "Starting DFS with start node: (" << _nodeIndexStart[0] << ", " << _nodeIndexStart[1] << ") and end node: (" << _nodeIndexEnd[0] << ", " << _nodeIndexEnd[1] << ")\n";
+    // Call the DFS algorithm starting from the startNode
     Node& startNode = nodeVector->at(_nodeIndexStart[0]).at(_nodeIndexStart[1]); // Example: starting node
     startNode.visited = true; // Mark the start node as visited
     startNode.isPath = true; // Mark the start node as part of the path
@@ -33,14 +33,14 @@ void BFS::OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2])
     endNode.isObstacle = false; // Ensure the start node is not an obstacle 
     endNode.visited = false; // Ensure the end node is not visited
 
-    BreadthFirstSearch(startNode, endNode);
+    DepthFirstSearch(startNode, endNode);
 }
 
-void BFS::OnUpdate() const
+void DFS::OnUpdate() const
 {
 }
 
-void BFS::OnRender() const
+void DFS::OnRender() const
 {
     for(int x = 0; x < gridWidth; x++)
     {
@@ -53,12 +53,12 @@ void BFS::OnRender() const
 
             // tile is obstacle: Set tile color to black
             if (currentNode.isObstacle == true) {
-                color = LIGHTGRAY;
+                color = BLACK;
             } 
 
             // Tile is Visited: Set tile color to light grey
             if(currentNode.visited && !currentNode.isObstacle) {
-                color = BLUE;
+                color = LIGHTGRAY;
             }
 
             // Tile is Path: Set tile color to green
@@ -75,54 +75,54 @@ void BFS::OnRender() const
     }
 }
 
-void BFS::OnEnd()
+void DFS::OnEnd()
 {
 }
 
-int BFS::GetGridWidth() const
+int DFS::GetGridWidth() const
 {
     return gridWidth;
 }
 
-int BFS::GetGridHeight() const
+int DFS::GetGridHeight() const
 {
     return gridHeight;
 }
 
-void BFS::SetGridSize(int width, int height)
+void DFS::SetGridSize(int width, int height)
 {
     gridWidth = width;
     gridHeight = height;
 }
 
-void BFS::BreadthFirstSearch(Node& _startNode, Node& _endNode)
+void DFS::DepthFirstSearch(Node& _startNode, Node& _endNode)
 {
-    // Implementation of the BFS algorithm
-    // This function will be called to perform the BFS search starting from the given node
+    // Implementation of the DFS algorithm
+    // This function will be called to perform the DFS search starting from the given node
     // used to scan
     Node& currentNode = _startNode;
-    // This is a first in the first out structure FIFO
-    std::queue<Node*> queue;
+    // This is a Last in the last out structure LIFO
+    std::stack<Node*> stack;
 
-    // Empty the queue before starting the search
-    queue.empty();
+    // Empty the stack before starting the search
+    stack.empty();
 
     // visit the first node
     currentNode.visited = true;
 
     // insert the node r into the queue
-    queue.push(&currentNode); // Add the start node to the queue
+    stack.push(&currentNode); // Add the start node to the queue
 
 
     // while the queue is not empty loop
-    while(!queue.empty())
+    while(!stack.empty())
     {
         // add a slight delay for visualization purposes
         //WaitTime(0.1f); // Uncomment if you want to add a delay for visualization
         //WaitTime(0.01f);
         // Node n = RemoveQ(queue);
-        Node* n = queue.front(); // Get the front node from the queue
-        queue.pop(); // Remove the front node from the queue
+        Node* n = stack.top(); // Get the front node from the queue
+        stack.pop(); // Remove the front node from the queue
         // Check if we reached the end node
         if (n->position.x == _endNode.position.x && n->position.y == _endNode.position.y) {
             std::cout << "Reached the end node at: (" << n->position.x << ", " << n->position.y << ")\n";
@@ -130,10 +130,7 @@ void BFS::BreadthFirstSearch(Node& _startNode, Node& _endNode)
             Node* pathNode = n; // Start from the end node
             while (pathNode != nullptr) {
                 pathNode->isPath = true; // Mark the node as part of the path
-                //if(pathNode->parent != nullptr) {
                     pathNode = pathNode->parent; // Move to the parent node
-                    //std::cout << "Path Node: (" << pathNode->position.x << ", " << pathNode->position.y << ")\n";
-                //}
             }
             return; // Exit if the end node is reached
         }
@@ -148,7 +145,7 @@ void BFS::BreadthFirstSearch(Node& _startNode, Node& _endNode)
             if (!rightNode.visited && !rightNode.isObstacle) {
                 rightNode.visited = true; // Mark the node as visited
                 rightNode.parent = n; // Set the parent node
-                queue.push(&rightNode); // Add the adjacent node to the queue
+                stack.push(&rightNode); // Add the adjacent node to the queue
             }
         }
 
@@ -158,7 +155,7 @@ void BFS::BreadthFirstSearch(Node& _startNode, Node& _endNode)
             if (!downNode.visited && !downNode.isObstacle) {
                 downNode.visited = true; // Mark the node as visited
                 downNode.parent = n; // Set the parent node
-                queue.push(&downNode); // Add the adjacent node to the queue
+                stack.push(&downNode); // Add the adjacent node to the queue
             }
         }
 
@@ -167,7 +164,7 @@ void BFS::BreadthFirstSearch(Node& _startNode, Node& _endNode)
             if (!leftNode.visited && !leftNode.isObstacle) {
                 leftNode.visited = true; // Mark the node as visited
                 leftNode.parent = n; // Set the parent node
-                queue.push(&leftNode); // Add the adjacent node to the queue
+                stack.push(&leftNode); // Add the adjacent node to the queue
             }
         }
         if (n->position.x < gridWidth && n->position.y - 1 >= 0) {
@@ -175,17 +172,19 @@ void BFS::BreadthFirstSearch(Node& _startNode, Node& _endNode)
             if (!upNode.visited && !upNode.isObstacle) {
                 upNode.visited = true; // Mark the node as visited
                 upNode.parent = n; // Set the parent node
-                queue.push(&upNode); // Add the adjacent node to the queue
+                stack.push(&upNode); // Add the adjacent node to the queue
             }
         }
+
+        
     }   // end while
-} // end BredthFirstSearch
+} // end DepthFirstSearch
 
 
-void BFS::CreateRandomObstacles(int obstacleCount)
+void DFS::CreateRandomObstacles(int obstacleCount)
 {
     
-    // Create random obstacles in the BFS grid
+    // Create random obstacles in the DFS grid
     if (!nodeVector) {
         TraceLog(LOG_WARNING, "nodeVector is null");
         return; // Check if the node vector is initialized

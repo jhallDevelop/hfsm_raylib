@@ -9,4 +9,5 @@ public:
     virtual void OnUpdate() const = 0;
     virtual void OnRender() const = 0;
     virtual void OnEnd() = 0;
+    virtual void CreateRandomObstacles(int obstacleCount) = 0;
 };
