@@ -1,10 +1,7 @@
-#include <memory>
-#include <queue>
 #include "raylib.h"
-#include "DFS.h"
+#include "A_Star.h"
 #include <iostream>
-
-DFS::DFS(int _gridWidth, int _gridHeight, int _gridSize) : gridWidth(_gridWidth), gridHeight(_gridHeight), gridSize(_gridSize)
+AStar::AStar(int _gridWidth, int _gridHeight, int _gridSize)
 {
     // Initialize the node grid
     nodeVector = std::make_unique<std::vector<std::vector<Node>>>();
@@ -12,11 +9,11 @@ DFS::DFS(int _gridWidth, int _gridHeight, int _gridSize) : gridWidth(_gridWidth)
     Node::CreateNodeGrid(nodeVector.get(), gridWidth, gridHeight);
 }
 
-DFS::~DFS()
+AStar::~AStar()
 {
 }
 
-void DFS::OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2])
+void AStar::OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2])
 {
     // Convert start and end positions to Node objects
     std::cout << "Starting DFS with start node: (" << _nodeIndexStart[0] << ", " << _nodeIndexStart[1] << ") and end node: (" << _nodeIndexEnd[0] << ", " << _nodeIndexEnd[1] << ")\n";
@@ -33,14 +30,14 @@ void DFS::OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2])
     endNode.isObstacle = false; // Ensure the start node is not an obstacle 
     endNode.visited = false; // Ensure the end node is not visited
 
-    DepthFirstSearch(startNode, endNode);
+    AStarSearch(startNode, endNode);
 }
 
-void DFS::OnUpdate() const
+void AStar::OnUpdate() const
 {
 }
 
-void DFS::OnRender() const
+void AStar::OnRender() const
 {
     for(int x = 0; x < gridWidth; x++)
     {
@@ -75,27 +72,33 @@ void DFS::OnRender() const
     }
 }
 
-void DFS::OnEnd()
+void AStar::OnEnd()
 {
 }
 
-int DFS::GetGridWidth() const
+void AStar::CreateRandomObstacles(int obstacleCount)
 {
-    return gridWidth;
+    // Create random obstacles in the DFS grid
+    if (!nodeVector) {
+        TraceLog(LOG_WARNING, "nodeVector is null");
+        return; // Check if the node vector is initialized
+    }
+
+    // randomly select nodes to be obstacles
+    if (obstacleCount <= 0 || obstacleCount > gridWidth * gridHeight) {
+        TraceLog(LOG_WARNING, "Invalid obstacle count: %d", obstacleCount);
+        return; // Invalid obstacle count
+    }
+    
+    // for loop to create obstacles
+    for (int i = 0; i < obstacleCount; ++i) {
+        int x = GetRandomValue(0, gridWidth - 1);
+        int y = GetRandomValue(0, gridHeight - 1);
+        nodeVector.get()->at(x).at(y).isObstacle = true; // Mark the node as an obstacle
+    }
 }
 
-int DFS::GetGridHeight() const
-{
-    return gridHeight;
-}
-
-void DFS::SetGridSize(int width, int height)
-{
-    gridWidth = width;
-    gridHeight = height;
-}
-
-void DFS::DepthFirstSearch(Node& _startNode, Node& _endNode)
+void AStar::AStarSearch(Node &_startNode, Node &_endNode)
 {
     // Implementation of the DFS algorithm
     // This function will be called to perform the DFS search starting from the given node
@@ -179,30 +182,4 @@ void DFS::DepthFirstSearch(Node& _startNode, Node& _endNode)
 
         
     }   // end while
-} // end DepthFirstSearch
-
-
-void DFS::CreateRandomObstacles(int obstacleCount)
-{
-    
-    // Create random obstacles in the DFS grid
-    if (!nodeVector) {
-        TraceLog(LOG_WARNING, "nodeVector is null");
-        return; // Check if the node vector is initialized
-    }
-
-    // randomly select nodes to be obstacles
-    if (obstacleCount <= 0 || obstacleCount > gridWidth * gridHeight) {
-        TraceLog(LOG_WARNING, "Invalid obstacle count: %d", obstacleCount);
-        return; // Invalid obstacle count
-    }
-    
-    // for loop to create obstacles
-    for (int i = 0; i < obstacleCount; ++i) {
-        int x = GetRandomValue(0, gridWidth - 1);
-        int y = GetRandomValue(0, gridHeight - 1);
-        nodeVector.get()->at(x).at(y).isObstacle = true; // Mark the node as an obstacle
-    }
 }
-
-

@@ -18,6 +18,8 @@
 #include "AI/state_machine/AI_HFSM.h"
 #include "AI/pathfinding/BFS.h"
 #include "AI/pathfinding/DFS.h"
+#include "AI/pathfinding/Diykstra.h"
+#include "AI/pathfinding/A_Star.h"
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
@@ -119,7 +121,7 @@ int main(void)
 
 
     // ==============  Pathfinding  ================
-    gameData.get()->pathFindingType = PathfindingType::DFS_TYPE;
+    gameData.get()->pathFindingType = PathfindingType::DIYKSTRA_TYPE;
     switch (gameData.get()->pathFindingType)
     {
     case PathfindingType::BFS_TYPE:
@@ -131,11 +133,11 @@ int main(void)
         break;
 
     case PathfindingType::DIYKSTRA_TYPE:
-        // gameData->pathfinding = std::make_unique<Dijkstra>(SCREEN_WIDTH/gridSize, SCREEN_HEIGHT/gridSize, gridSize);
+        gameData->pathfinding = std::make_unique<Diykstra>(SCREEN_WIDTH/gridSize, SCREEN_HEIGHT/gridSize, gridSize);
         break;
 
     case PathfindingType::A_STAR_TYPE:
-        // gameData->pathfinding = std::make_unique<AStar>(SCREEN_WIDTH/gridSize, SCREEN_HEIGHT/gridSize, gridSize);
+        gameData->pathfinding = std::make_unique<AStar>(SCREEN_WIDTH/gridSize, SCREEN_HEIGHT/gridSize, gridSize);
         break;
     
     }
