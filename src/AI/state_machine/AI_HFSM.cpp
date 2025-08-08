@@ -5,6 +5,7 @@
 #include "AI_State_Attack.h"
 #include "AI_State_Reload.h"
 #include "AI_State_Shoot.h"
+#include "AI_State_Pathfind.h"
 #include <iostream>
 AI_HSFM::AI_HSFM() {
     // Initialize the AI state machine to the idle state
@@ -23,6 +24,8 @@ void AI_HSFM::InitializeStates(Pawn& _agent)
     reloadState = std::make_unique<AI_State_Reload>(); 
     // Shoot State
     shootState = std::make_unique<AI_State_Shoot>();
+    // Pathfinding State
+    pathfindState = std::make_unique<AI_State_Pathfind>();
 
     // Add new states to the state machine as needed
 
@@ -32,7 +35,7 @@ void AI_HSFM::InitializeStates(Pawn& _agent)
     std::cout << "Initial state: " << currentAIStatePtr->GetStateName() << std::endl;
 }
 
-void AI_HSFM::Update(Pawn& _agent, Pawn& _target)
+void AI_HSFM::Update(Pawn& _agent, Actor& _target)
 {
     // Update logic based on the current state
     if(currentAIStatePtr == nullptr) {
@@ -48,7 +51,6 @@ void AI_HSFM::Update(Pawn& _agent, Pawn& _target)
 
 void AI_HSFM::TransitionToState(Pawn& _agent, e_AI_StateID _nextStateID)  {
     if(currentAIStatePtr != nullptr && _nextStateID == currentAIStatePtr->GetStateID()) {
-        std::cout << "Already in the desired state, no transition needed." << std::endl;
         return; // No transition needed if already in the desired state
     }
 
@@ -75,6 +77,9 @@ void AI_HSFM::TransitionToState(Pawn& _agent, e_AI_StateID _nextStateID)  {
             break;
         case e_AI_StateID::Shoot:
             newStatePtr = shootState.get();
+            break;
+        case e_AI_StateID::Pathfind:
+            newStatePtr = pathfindState.get();
             break;
         // Add more cases for additional states as needed
         default:

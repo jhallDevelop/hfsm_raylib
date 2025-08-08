@@ -14,7 +14,7 @@ void AI_State_Seek::OnEnter(Pawn &_agent)
 {
 }
 
-e_AI_StateID AI_State_Seek::OnUpdate(Pawn& _agent, Pawn& _target)
+e_AI_StateID AI_State_Seek::OnUpdate(Pawn& _agent, Actor& _target)
 {
     // If the target escapes our range, switch to wander state
     // We actually should be adding the radius of the agent to the distance check, but this is close enough for now

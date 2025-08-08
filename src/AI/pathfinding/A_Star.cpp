@@ -16,7 +16,6 @@ AStar::~AStar()
 void AStar::OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2])
 {
     // Convert start and end positions to Node objects
-    std::cout << "Starting DFS with start node: (" << _nodeIndexStart[0] << ", " << _nodeIndexStart[1] << ") and end node: (" << _nodeIndexEnd[0] << ", " << _nodeIndexEnd[1] << ")\n";
     // Call the DFS algorithm starting from the startNode
     Node& startNode = nodeVector->at(_nodeIndexStart[0]).at(_nodeIndexStart[1]); // Example: starting node
     startNode.visited = true; // Mark the start node as visited
@@ -50,12 +49,12 @@ void AStar::OnRender() const
 
             // tile is obstacle: Set tile color to black
             if (currentNode.isObstacle == true) {
-                color = BLACK;
+                color = LIGHTGRAY;
             } 
 
             // Tile is Visited: Set tile color to light grey
             if(currentNode.visited && !currentNode.isObstacle) {
-                color = LIGHTGRAY;
+                color = BLUE;
             }
 
             // Tile is Path: Set tile color to green
@@ -150,15 +149,17 @@ void AStar::AStarSearch(Node &_startNode, Node &_endNode)
 
         //openSet.pop(); // Remove the front node from the queue
         // Check if we reached the end node
-        if (lowestFCostNode->position.x == _endNode.position.x && lowestFCostNode->position.y == _endNode.position.y) {
-            std::cout << "Reached the end node at: (" << lowestFCostNode->position.x << ", " << lowestFCostNode->position.y << ")\n";
-            // start retracing the path
-            Node* pathNode = lowestFCostNode; // Start from the end node
+        if (lowestFCostNode == &_endNode) { // Simpler check: compare pointers
+            finalPath.clear();
+            Node* pathNode = lowestFCostNode;
             while (pathNode != nullptr) {
-                pathNode->isPath = true; // Mark the node as part of the path
-                pathNode = pathNode->parent; // Move to the parent node
+                pathNode->isPath = true;
+                finalPath.push_back(pathNode);
+                pathNode = pathNode->parent;
             }
-            return; // Exit if the end node is reached
+            std::reverse(finalPath.begin(), finalPath.end());
+            m_currentWaypointIndex = 0; // Reset the waypoint index for the new path
+            return;
         }
 
         // for(each unmarked Node s adjacent to n){ 
@@ -245,4 +246,36 @@ void AStar::ResetGrid(int _gridWidth, int _gridHeight, int _gridSize) {
             node.isPath = false;
         }
     }
+}
+
+
+void AStar::StoreFinalPath(Node& _lowestCostNode, Node &_endNode)
+{
+    // Clear any previous path
+    finalPath.clear();
+
+    Node* pathNode = &_lowestCostNode; // Start from the end node
+    while (pathNode != nullptr) {
+        pathNode->isPath = true;
+        finalPath.push_back(pathNode); // Add each node to our path vector
+        pathNode = pathNode->parent;
+    }
+    // The path is now stored backwards (end -> start), so reverse it
+    std::reverse(finalPath.begin(), finalPath.end());
+}
+
+// Advance to the next waypoint in the path
+void AStar::AdvanceToNextWaypoint() {
+    if (!finalPath.empty() && m_currentWaypointIndex < finalPath.size() - 1) {
+        m_currentWaypointIndex++;
+    }
+}
+
+// Get the next waypoint in the path
+Vector2 AStar::GetNextWaypoint()
+{
+    if (finalPath.empty() || m_currentWaypointIndex >= finalPath.size()) {
+        return {-1, -1}; // Return an invalid position if no path or path is complete
+    }
+    return finalPath[m_currentWaypointIndex]->position;
 }

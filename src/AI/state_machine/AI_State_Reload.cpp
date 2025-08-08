@@ -16,7 +16,7 @@ void AI_State_Reload::OnEnter(Pawn &_agent)
     _agent.GetWeapon()->StartReload();
 }
 
-e_AI_StateID AI_State_Reload::OnUpdate(Pawn &_agent, Pawn &_target)
+e_AI_StateID AI_State_Reload::OnUpdate(Pawn &_agent, Actor &_target)
 {
    // While reloading, the agent should stop moving.
    _agent.SetVelocity({0, 0});

@@ -16,10 +16,12 @@ public:
     void DijkstraSearch(Node& _startNode, Node& _endNode);  
     void ResetGrid(int _gridWidth, int _gridHeight, int _gridSize) override;
     void UpdateNeighbourCost(Node& _lowestGCostNode, Node& _neighbour,std::vector<Node*>& _openSet);
-
+    Vector2 GetNextWaypoint() override;
+    void AdvanceToNextWaypoint() override; // Method to advance to the next waypoint in the path
 
 private:
     std::unique_ptr<std::vector<std::vector<Node>>> nodeVector;
+    std::vector<Node*> finalPath; // ADD THIS: To store the calculated path
     int gridWidth;  // Example width
     int gridHeight; // Example height
     int gridSize; // Size of each node in the grid

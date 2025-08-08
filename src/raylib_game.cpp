@@ -14,6 +14,7 @@
 #include <memory>   // For smart pointers
 #include <iostream>
 #include "raylib.h"
+#include "raymath.h" // For mathematical functions
 #include "Pawn.h"
 #include "AI/state_machine/AI_HFSM.h"
 #include "AI/pathfinding/BFS.h"
@@ -32,6 +33,7 @@
 //----------------------------------------------------------------------------------
 static const int SCREEN_WIDTH = 800;
 static const int SCREEN_HEIGHT = 450;
+int const GRID_SIZE = 20; // Example grid width
 const char* GAME_TITLE = "HFSM Example"; // Game title
 const char* GAME_DESCRIPTION = "W, A, S, D to Move"; // Game description
 enum PathfindingType {
@@ -55,6 +57,8 @@ typedef struct GameData {
     // Font
     Font font;
     PathfindingType pathFindingType;
+    std::unique_ptr<Pawn> pathfindingTarget; // Target for pathfinding (if needed)
+    int gridSize[2]; // Size of each node in the grid
 } GameData;
 std::unique_ptr<GameData> gameData;
 //----------------------------------------------------------------------------------
@@ -88,6 +92,8 @@ int main(void)
     gameData->playerPawn = std::make_unique<Pawn>();
     gameData->enemyPawn= std::make_unique<Pawn>();
     gameData->enemyAIStateMachine = std::make_unique<AI_HSFM>();
+    gameData->pathfindingTarget = std::make_unique<Pawn>(); // Create a target for pathfinding (if needed)
+
 
     // Initialise the pawns and AI state machine
     // get a reference to the player, enemy pawns and AI state machine
@@ -96,10 +102,10 @@ int main(void)
     AI_HSFM* enemyAIStateMachine = gameData->enemyAIStateMachine.get();
 
     // Initialize player and enemy pawns
-    playerPawn->CreatePawn({ 400, 280 }, 2.0f, BLUE, CIRCLE, 20.0f, true);
-    enemyPawn->CreatePawn({ 600, 280 }, 1.0f, RED, TRIANGLE, 20.0f, false);
+    playerPawn->CreatePawn({ 400, 280 }, 2.0f, BLUE, CIRCLE, GRID_SIZE /2, true);
+    enemyPawn->CreatePawn({ 600, 280 }, 1.0f, RED, TRIANGLE, GRID_SIZE/2, false);
     enemyAIStateMachine->InitializeStates(*enemyPawn); // Initialize AI states
-
+    
     // Create a weapon for the player pawn
     // Player
     gameData->playerWeapon = std::make_unique<Weapon>();
@@ -110,13 +116,15 @@ int main(void)
     gameData->enemyWeapon = std::make_unique<Weapon>();
     gameData->enemyWeapon->CreateWeapon(5, 1.0f, 2.0f); // Create a weapon with 5 ammo, 1 second fire rate
     enemyPawn->SetWeapon(gameData->enemyWeapon.get()); // Assign the weapon to the
+    enemyAIStateMachine->TransitionToState(*enemyPawn, e_AI_StateID::Pathfind); // Start in wander state
+
 
     // Load global data (assets that must be available in all screens, i.e. font)
     gameData.get()->font = LoadFont(FONT_FILE_PATH);
     Font* font = &gameData.get()->font; // Get a pointer to the font
 
     // setup the pathfinding algorithm
-    int const gridSize = 20; // Example grid width
+    
     int const randomObstacleCount = 250; // Number of random obstacles to create
 
 
@@ -125,19 +133,19 @@ int main(void)
     switch (gameData.get()->pathFindingType)
     {
     case PathfindingType::BFS_TYPE:
-        gameData->pathfinding = std::make_unique<BFS>(SCREEN_WIDTH/gridSize, SCREEN_HEIGHT/gridSize, gridSize);
+        gameData->pathfinding = std::make_unique<BFS>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE);
         break;
 
     case PathfindingType::DFS_TYPE:
-        gameData->pathfinding = std::make_unique<DFS>(SCREEN_WIDTH/gridSize, SCREEN_HEIGHT/gridSize, gridSize);
+        gameData->pathfinding = std::make_unique<DFS>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE);
         break;
 
     case PathfindingType::DIYKSTRA_TYPE:
-        gameData->pathfinding = std::make_unique<Diykstra>(SCREEN_WIDTH/gridSize, SCREEN_HEIGHT/gridSize, gridSize);
+        gameData->pathfinding = std::make_unique<Diykstra>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE);
         break;
 
     case PathfindingType::A_STAR_TYPE:
-        gameData->pathfinding = std::make_unique<AStar>(SCREEN_WIDTH/gridSize, SCREEN_HEIGHT/gridSize, gridSize);
+        gameData->pathfinding = std::make_unique<AStar>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE);
         break;
     
     }
@@ -151,9 +159,11 @@ int main(void)
     
     pathfinding->CreateRandomObstacles(randomObstacleCount); // Create random obstacles in the grid
     // pick a random start and end node for the pathfinding algorithm
-    int startNodeIndex[2] = { GetRandomValue(0, SCREEN_WIDTH/gridSize - 1), GetRandomValue(0, SCREEN_HEIGHT/gridSize - 1) };
-    int endNodeIndex[2] = { GetRandomValue(0, SCREEN_WIDTH/gridSize - 1), GetRandomValue(0, SCREEN_HEIGHT/gridSize - 1) };
+    int startNodeIndex[2] = { (int)(playerPawn->GetPosition().x/GRID_SIZE), (int)(playerPawn->GetPosition().y/GRID_SIZE)};
+    int endNodeIndex[2] = { (int)(enemyPawn->GetPosition().x/GRID_SIZE), (int)(enemyPawn->GetPosition().y/GRID_SIZE)};
     pathfinding->OnStart(startNodeIndex, endNodeIndex); // Initialize the pathfinding algorithm
+
+    
     
 
 #if defined(PLATFORM_WEB)
@@ -203,6 +213,28 @@ void Draw(const GameData& _gameData){
     DrawTextEx(_gameData.font, GAME_DESCRIPTION, descriptionPos, _gameData.font.baseSize*1.0f, 4, BLACK);
     DrawTextEx(_gameData.font, _gameData.enemyAIStateMachine.get()->GetCurrentState()->GetStateName(), statePos, _gameData.font.baseSize*1.0f, 4, BLACK);
     
+    // Draw the pathfinding type as text to the screen
+    char pathfindingTypeCharBuffer[1024];
+    switch (_gameData.pathFindingType)
+    {
+    case PathfindingType::BFS_TYPE:
+        snprintf(pathfindingTypeCharBuffer, sizeof(pathfindingTypeCharBuffer), "Pathfinding: BFS");
+        break;
+    case PathfindingType::DFS_TYPE:
+        
+        snprintf(pathfindingTypeCharBuffer, sizeof(pathfindingTypeCharBuffer), "Pathfinding: DFS");
+        break;
+    case PathfindingType::DIYKSTRA_TYPE:
+        snprintf(pathfindingTypeCharBuffer, sizeof(pathfindingTypeCharBuffer), "Pathfinding: Diykstra");
+        break;
+    case PathfindingType::A_STAR_TYPE:
+        snprintf(pathfindingTypeCharBuffer, sizeof(pathfindingTypeCharBuffer), "Pathfinding: A*");
+        break;
+    default:
+        snprintf(pathfindingTypeCharBuffer, sizeof(pathfindingTypeCharBuffer), "Pathfinding: Unknown");
+        break;
+    }
+    DrawTextEx(_gameData.font, pathfindingTypeCharBuffer, { 20, SCREEN_HEIGHT - 30 }, _gameData.font.baseSize*1.0f, 4, BLUE);
     
 
     // Render player pawn
@@ -210,18 +242,92 @@ void Draw(const GameData& _gameData){
     
     // render enemy pawn
     _gameData.enemyPawn->Render();
-
-    
 }
 
 
 // Update AI state machine and pawns
 void UpdateAI(GameData& _gameData)
 {
-    // Update AI state machine
+    // Get pointers to the necessary objects
     Pawn* playerPawn = _gameData.playerPawn.get();
     Pawn* enemyPawn = _gameData.enemyPawn.get();
-    _gameData.enemyAIStateMachine->Update(*enemyPawn, *playerPawn);
+    Pathfinding* pathfinding = _gameData.pathfinding.get();
+    AI_HSFM* enemyAIStateMachine = _gameData.enemyAIStateMachine.get();
+
+    // Safety checks
+    if (!playerPawn || !enemyPawn || !pathfinding || !enemyAIStateMachine) {
+        TraceLog(LOG_ERROR, "UpdateAI: A required game object is null!");
+        return;
+    }
+
+    // --- 1. Calculate and CLAMP Path Indices ---
+    // Get grid dimensions from the pathfinding object itself for safety.
+    // (You will need to add GetGridWidth() and GetGridHeight() to your Pathfinding/AStar class)
+    int gridW = SCREEN_WIDTH / GRID_SIZE;
+    int gridH = SCREEN_HEIGHT / GRID_SIZE;
+
+    // Calculate raw indices from world positions
+    int startX = (int)(enemyPawn->GetPosition().x / GRID_SIZE);
+    int startY = (int)(enemyPawn->GetPosition().y / GRID_SIZE);
+    int endX   = (int)(playerPawn->GetPosition().x / GRID_SIZE);
+    int endY   = (int)(playerPawn->GetPosition().y / GRID_SIZE);
+
+    // Clamp the indices to ensure they are always within the valid grid range [0, width-1] and [0, height-1]
+    startX = Clamp(startX, 0, gridW - 1);
+    startY = Clamp(startY, 0, gridH - 1);
+    endX   = Clamp(endX, 0, gridW - 1);
+    endY   = Clamp(endY, 0, gridH - 1);
+
+    int startNodeIndex[2] = { startX, startY };
+    int endNodeIndex[2]   = { endX, endY };
+
+    pathfinding->OnStart(startNodeIndex, endNodeIndex);
+
+    // --- 2. Get the Current Waypoint (in Grid Coordinates) ---
+    Vector2 currentWaypointGrid = pathfinding->GetNextWaypoint();
+
+    // --- 3. Check if the Path is Valid ---
+    if (currentWaypointGrid.x == -1 && currentWaypointGrid.y == -1) {
+        // No path exists or the path is complete. Seek the player directly as a fallback.
+        enemyAIStateMachine->Update(*enemyPawn, *playerPawn);
+        return;
+    }
+
+    // --- 4. Convert Waypoint to World Coordinates ---
+    Vector2 currentWaypointWorld = {
+        (currentWaypointGrid.x * GRID_SIZE) + (GRID_SIZE / 2.0f),
+        (currentWaypointGrid.y * GRID_SIZE) + (GRID_SIZE / 2.0f)
+    };
+
+    // --- 5. Check for Arrival at the Current Waypoint ---
+    float distanceToWaypoint = Vector2Distance(enemyPawn->GetPosition(), currentWaypointWorld);
+    float stoppingRadius = GRID_SIZE * 0.75f; // A sensible radius, slightly more than half a grid cell
+
+    if (distanceToWaypoint < stoppingRadius) {
+        // We're close enough, so advance to the next waypoint in the path.
+        pathfinding->AdvanceToNextWaypoint();
+        
+        // Get the position of the NEW current waypoint (in Grid Coordinates)
+        currentWaypointGrid = pathfinding->GetNextWaypoint();
+        
+        // Check again in case we just finished the last waypoint.
+        if (currentWaypointGrid.x == -1 && currentWaypointGrid.y == -1) {
+            // Path is now complete, seek the player's actual final position.
+            enemyAIStateMachine->Update(*enemyPawn, *playerPawn);
+            return;
+        }
+
+        // CONVERT THE NEW WAYPOINT TO WORLD COORDINATES
+        currentWaypointWorld = {
+            (currentWaypointGrid.x * GRID_SIZE) + (GRID_SIZE / 2.0f),
+            (currentWaypointGrid.y * GRID_SIZE) + (GRID_SIZE / 2.0f)
+        };
+    }
+
+    // --- 6. Set AI Target and Update ---
+    // The target is always the valid, up-to-date waypoint in WORLD coordinates.
+    _gameData.pathfindingTarget->SetPosition(currentWaypointWorld);
+    enemyAIStateMachine->Update(*enemyPawn, *_gameData.pathfindingTarget.get());
 }
 
 // Update pawns based on AI and player input
@@ -248,13 +354,16 @@ void GameUpdate()
     // --- LOGIC PHASE 2: AI (with Debug Drawing) ---
     // The AI calculates its force and can draw debug visuals.
     // This must happen before the physics update.
-    gameData.get()->enemyAIStateMachine->Update(*gameData.get()->enemyPawn, *gameData.get()->playerPawn);
+    //gameData.get()->enemyAIStateMachine->Update(*gameData.get()->enemyPawn, *gameData.get()->playerPawn);
 
     // --- LOGIC PHASE 3: PHYSICS ---
     // Now that all forces for this frame are known (from Input and AI),
     // we apply them to update the pawn positions and velocities.
     // This must happen after AI and before the final render.
     UpdatePawns(*gameData.get());
+
+    // update AI state machine
+    UpdateAI(*gameData.get());
 
     // --- RENDER PHASE ---
     // Draw the final, updated state of the world.
@@ -267,11 +376,22 @@ void WrapPawnPosition(Pawn &_pawn)
 {
     // Wrap pawn position to screen bounds
     Vector2 pos = _pawn.GetPosition();
-    if (pos.x < 0) pos.x = SCREEN_WIDTH;
-    else if (pos.x > SCREEN_WIDTH) pos.x = 0;
 
-    if (pos.y < 0) pos.y = SCREEN_HEIGHT;
-    else if (pos.y > SCREEN_HEIGHT) pos.y = 0;
+    // Wrap X position
+    if (pos.x < 0) {
+        pos.x = SCREEN_WIDTH;
+    }
+    else if (pos.x > SCREEN_WIDTH) {
+        pos.x = 0;
+    }
+
+    // Wrap Y position
+    if (pos.y < 0) {
+        pos.y = SCREEN_HEIGHT;
+    }
+    else if (pos.y > SCREEN_HEIGHT) {
+        pos.y = 0;
+    }
 
     _pawn.SetPosition(pos); // Set the wrapped position back to the pawn
 }
@@ -284,10 +404,21 @@ void UpdateInput(Pawn& _pawn)
     // Update player pawn based on input
     Vector2 force = { 0.0f, 0.0f };
     
-    if (IsKeyDown(KEY_D)) force.x += 1.0f;
-    if (IsKeyDown(KEY_A))  force.x -= 1.0f;
-    if (IsKeyDown(KEY_W))    force.y -= 1.0f;
-    if (IsKeyDown(KEY_S))  force.y += 1.0f;
+    if (IsKeyDown(KEY_D)) {
+        force.x += 1.0f;
+    }
+
+    if (IsKeyDown(KEY_A))  {
+        force.x -= 1.0f;
+    }
+
+    if (IsKeyDown(KEY_W)){
+        force.y -= 1.0f;
+    }
+
+    if (IsKeyDown(KEY_S)){
+        force.y += 1.0f;
+    }
 
     // Normalize the force if moving diagonally to prevent faster speed
     if (Vector2LengthSqr(force) > 0) {

@@ -122,20 +122,15 @@ void BFS::BreadthFirstSearch(Node& _startNode, Node& _endNode)
         // add a slight delay for visualization purposes
         //WaitTime(0.1f); // Uncomment if you want to add a delay for visualization
         //WaitTime(0.01f);
-        // Node n = RemoveQ(queue);
         Node* n = queue.front(); // Get the front node from the queue
         queue.pop(); // Remove the front node from the queue
         // Check if we reached the end node
         if (n->position.x == _endNode.position.x && n->position.y == _endNode.position.y) {
-            std::cout << "Reached the end node at: (" << n->position.x << ", " << n->position.y << ")\n";
             // start retracing the path
             Node* pathNode = n; // Start from the end node
             while (pathNode != nullptr) {
                 pathNode->isPath = true; // Mark the node as part of the path
-                //if(pathNode->parent != nullptr) {
-                    pathNode = pathNode->parent; // Move to the parent node
-                    //std::cout << "Path Node: (" << pathNode->position.x << ", " << pathNode->position.y << ")\n";
-                //}
+                pathNode = pathNode->parent; // Move to the parent node
             }
             return; // Exit if the end node is reached
         }
@@ -220,5 +215,23 @@ void BFS::ResetGrid(int _gridWidth, int _gridHeight, int _gridSize) {
     }
 }
 
+Vector2 BFS::GetNextWaypoint()
+{
+    // If the path has fewer than 2 nodes, there's no "next" step.
+    if (finalPath.size() < 2) {
+        // Return the final destination or the agent's current location.
+        if (!finalPath.empty()) {
+            return finalPath.back()->position; // Return the goal
+        }
+        return {-1, -1}; // Or some other invalid position
+    }
 
+    // The next waypoint is the second node in the path.
+    // m_finalPath[0] is the start node.
+    // m_finalPath[1] is the first step to take.
+    return finalPath[1]->position;
+}
 
+void BFS::AdvanceToNextWaypoint()
+{
+}

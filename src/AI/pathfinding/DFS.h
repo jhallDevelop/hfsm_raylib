@@ -16,9 +16,12 @@ public:
     void CreateRandomObstacles(int obstacleCount) override;
     void DepthFirstSearch(Node& _startNode, Node& _endNode);
     void ResetGrid(int _gridWidth, int _gridHeight, int _gridSize) override;  
+    Vector2 GetNextWaypoint() override;
+    void AdvanceToNextWaypoint() override; // Method to advance to the next waypoint in the path
     
 private:
     std::unique_ptr<std::vector<std::vector<Node>>> nodeVector;
+    std::vector<Node*> finalPath; // ADD THIS: To store the calculated path
     int gridWidth = 10;  // Example width
     int gridHeight = 10; // Example height
     int gridSize = 20; // Size of each node in the grid

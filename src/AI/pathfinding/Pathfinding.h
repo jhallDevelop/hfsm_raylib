@@ -1,5 +1,5 @@
 #pragma once
-
+#include "raymath.h"
 class Pathfinding {
 public:
     virtual ~Pathfinding() = default;
@@ -11,4 +11,6 @@ public:
     virtual void OnEnd() = 0;
     virtual void CreateRandomObstacles(int obstacleCount) = 0;
     virtual void ResetGrid(int _gridWidth, int _gridHeight, int _gridSize) = 0;
+    virtual Vector2 GetNextWaypoint() = 0; // Method to get the next waypoint in the path
+    virtual void AdvanceToNextWaypoint() = 0; // Method to advance to the next waypoint in the path
 };

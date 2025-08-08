@@ -9,10 +9,10 @@ public:
     ~AI_HSFM() = default;
 
     void InitializeStates(Pawn& _agent);
-    void Update(Pawn& _agent, Pawn& _target);  // Update the state machine
+    void Update(Pawn& _agent, Actor& _target);  // Update the state machine
     
     const AI_State* GetCurrentState() const { return currentAIStatePtr; }  // Get the current state pointer
-
+    void TransitionToState(Pawn& _agent, e_AI_StateID _nextStateID) ;  // Change to a new state
 private:
     AI_State* currentAIStatePtr;  // Pointer to the current AI state object
 
@@ -22,9 +22,10 @@ private:
     std::unique_ptr<AI_State> attackState;  // Pointer to the attack state
     std::unique_ptr<AI_State> reloadState;  // Pointer to the reload state
     std::unique_ptr<AI_State> shootState;   // Pointer to the shoot state
+    std::unique_ptr<AI_State> pathfindState; // Pointer to the pathfinding state
     // Add more states as needed
 
     // Transition to a new state
     // needs protecting as transitions handled in the FSM update function
-    void TransitionToState(Pawn& _agent, e_AI_StateID _nextStateID) ;  // Change to a new state
+    
 };

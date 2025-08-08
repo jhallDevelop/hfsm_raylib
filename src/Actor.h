@@ -13,7 +13,7 @@ public:
     virtual void Update() = 0;
     virtual void Render() = 0;
     virtual void Destroy() = 0;
-
+    //
     // Setters
     void SetPosition(Vector2 pos) { position = pos; }
     Vector2 GetPosition() const { return position; }

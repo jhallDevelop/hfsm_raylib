@@ -13,7 +13,7 @@ void AI_State_Attack::OnEnter(Pawn &_agent)
 {
 }
 
-e_AI_StateID AI_State_Attack::OnUpdate(Pawn &_agent, Pawn &_target)
+e_AI_StateID AI_State_Attack::OnUpdate(Pawn &_agent, Actor &_target)
 {
     // If the target escapes our range, switch to Seek state
     float distanceToTarget = Vector2Distance(_target.GetPosition(), _agent.GetPosition());

@@ -15,7 +15,7 @@ void AI_State_Wander::OnEnter(Pawn &_agent)
 {
 }
 
-e_AI_StateID AI_State_Wander::OnUpdate(Pawn& _agent, Pawn& _target)
+e_AI_StateID AI_State_Wander::OnUpdate(Pawn& _agent, Actor& _target)
 {
     // --- Wander Behavior Implementation ---
     // if the target is close enough, we stop wandering.

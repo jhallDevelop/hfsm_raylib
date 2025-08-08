@@ -19,7 +19,6 @@ DFS::~DFS()
 void DFS::OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2])
 {
     // Convert start and end positions to Node objects
-    std::cout << "Starting DFS with start node: (" << _nodeIndexStart[0] << ", " << _nodeIndexStart[1] << ") and end node: (" << _nodeIndexEnd[0] << ", " << _nodeIndexEnd[1] << ")\n";
     // Call the DFS algorithm starting from the startNode
     Node& startNode = nodeVector->at(_nodeIndexStart[0]).at(_nodeIndexStart[1]); // Example: starting node
     startNode.visited = true; // Mark the start node as visited
@@ -219,3 +218,23 @@ void DFS::ResetGrid(int _gridWidth, int _gridHeight, int _gridSize) {
     }
 }
 
+Vector2 DFS::GetNextWaypoint()
+{
+    // If the path has fewer than 2 nodes, there's no "next" step.
+    if (finalPath.size() < 2) {
+        // Return the final destination or the agent's current location.
+        if (!finalPath.empty()) {
+            return finalPath.back()->position; // Return the goal
+        }
+        return {-1, -1}; // Or some other invalid position
+    }
+
+    // The next waypoint is the second node in the path.
+    // m_finalPath[0] is the start node.
+    // m_finalPath[1] is the first step to take.
+    return finalPath[1]->position;
+}
+
+void DFS::AdvanceToNextWaypoint()
+{
+}

@@ -7,7 +7,7 @@ public:
     AI_State_Wander();
     ~AI_State_Wander() override = default;
     void OnEnter(Pawn &_agent) override;   // Called when entering the wander state
-    e_AI_StateID OnUpdate(Pawn& _agent, Pawn& _target) override;  // Called every frame while in the wander state
+    e_AI_StateID OnUpdate(Pawn& _agent, Actor& _target) override;  // Called every frame while in the wander state
     void OnExit(Pawn &_agent) override;    // Called when exiting the wander state
 private:
     const float minDistanceToTarget = 80.0f; // Minimum distance to the target to stop wandering

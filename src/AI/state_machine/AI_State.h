@@ -7,7 +7,8 @@ enum class e_AI_StateID {
     Seek, 
     Attack,
     Reload,
-    Shoot
+    Shoot, 
+    Pathfind
     // Add more states as needed
 };
 
@@ -16,7 +17,7 @@ public:
     AI_State(e_AI_StateID id, const char* name) : stateName(name), stateID(id) {};
     virtual ~AI_State() = default;
     virtual void OnEnter(Pawn &_agent) = 0;   // Called when entering the state
-    virtual e_AI_StateID OnUpdate(Pawn& _agent, Pawn& _target) = 0;  // Called every frame while in the state
+    virtual e_AI_StateID OnUpdate(Pawn& _agent, Actor& _target) = 0;  // Called every frame while in the state
     virtual void OnExit(Pawn &_agent) = 0;    // Called when exiting the state
 
     // Getters/Setters

@@ -12,7 +12,7 @@ void AI_State_Shoot::OnEnter(Pawn &_agent)
 {
 }
 
-e_AI_StateID AI_State_Shoot::OnUpdate(Pawn &_agent, Pawn &_target)
+e_AI_StateID AI_State_Shoot::OnUpdate(Pawn &_agent, Actor &_target)
 {
     // animate the shooting effect
     DrawCircleV(_agent.GetPosition(), _agent.GetSize()*2, BLACK);
