@@ -97,6 +97,7 @@ void DFS::SetGridSize(int width, int height)
 
 void DFS::DepthFirstSearch(Node& _startNode, Node& _endNode)
 {
+    ResetGrid(gridWidth, gridHeight, gridSize);
     // Implementation of the DFS algorithm
     // This function will be called to perform the DFS search starting from the given node
     // used to scan
@@ -205,4 +206,16 @@ void DFS::CreateRandomObstacles(int obstacleCount)
     }
 }
 
+// Reset the grid to its initial state
+void DFS::ResetGrid(int _gridWidth, int _gridHeight, int _gridSize) {
+    for (int x = 0; x < _gridWidth; ++x) {
+        for (int y = 0; y < _gridHeight; ++y) {
+            Node& node = nodeVector->at(x).at(y);
+            node.gCost = FLT_MAX; // Your constructor already does this, but it's good practice
+            node.parent = nullptr;
+            node.visited = false;
+            node.isPath = false;
+        }
+    }
+}
 

@@ -97,6 +97,8 @@ void BFS::SetGridSize(int width, int height)
 
 void BFS::BreadthFirstSearch(Node& _startNode, Node& _endNode)
 {
+    ResetGrid(gridWidth, gridHeight, gridSize);
+
     // Implementation of the BFS algorithm
     // This function will be called to perform the BFS search starting from the given node
     // used to scan
@@ -204,5 +206,19 @@ void BFS::CreateRandomObstacles(int obstacleCount)
         nodeVector.get()->at(x).at(y).isObstacle = true; // Mark the node as an obstacle
     }
 }
+
+// Reset the grid to its initial state
+void BFS::ResetGrid(int _gridWidth, int _gridHeight, int _gridSize) {
+    for (int x = 0; x < _gridWidth; ++x) {
+        for (int y = 0; y < _gridHeight; ++y) {
+            Node& node = nodeVector->at(x).at(y);
+            node.gCost = FLT_MAX; // Your constructor already does this, but it's good practice
+            node.parent = nullptr;
+            node.visited = false;
+            node.isPath = false;
+        }
+    }
+}
+
 
 

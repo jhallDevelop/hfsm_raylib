@@ -121,7 +121,7 @@ int main(void)
 
 
     // ==============  Pathfinding  ================
-    gameData.get()->pathFindingType = PathfindingType::DIYKSTRA_TYPE;
+    gameData.get()->pathFindingType = PathfindingType::A_STAR_TYPE;
     switch (gameData.get()->pathFindingType)
     {
     case PathfindingType::BFS_TYPE:

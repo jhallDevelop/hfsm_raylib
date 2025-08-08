@@ -1,7 +1,7 @@
 #include "raylib.h"
 #include "A_Star.h"
 #include <iostream>
-AStar::AStar(int _gridWidth, int _gridHeight, int _gridSize)
+AStar::AStar(int _gridWidth, int _gridHeight, int _gridSize) : gridWidth(_gridWidth), gridHeight(_gridHeight), gridSize(_gridSize)
 {
     // Initialize the node grid
     nodeVector = std::make_unique<std::vector<std::vector<Node>>>();
@@ -100,41 +100,63 @@ void AStar::CreateRandomObstacles(int obstacleCount)
 
 void AStar::AStarSearch(Node &_startNode, Node &_endNode)
 {
-    // Implementation of the DFS algorithm
-    // This function will be called to perform the DFS search starting from the given node
+    // Reset the grid to its initial state
+    ResetGrid(gridWidth, gridHeight, gridSize);
+    
+    // Implementation of the Dijkstra algorithm
+    // This function will be called to perform the Dijkstra search starting from the given node
     // used to scan
     Node& currentNode = _startNode;
-    // This is a Last in the last out structure LIFO
-    // This is one of the main differences between DFS and BFS
-    // BFS uses a queue, while DFS uses a stack
-    std::stack<Node*> stack;
+    
+    // The openSet should be a NEW, SEPARATE vector that holds pointers to the nodes to be evaluated.
+    std::vector<Node*> openSet;
+    openSet.push_back(&currentNode);
+    
+    // Initialize the start node
+    currentNode.isPath = true; // Mark the start node as part of the path
+    currentNode.isObstacle = false; // Ensure the start node is not an obstacle
+    // set the gCost of the start node to 0
+    currentNode.gCost = 0.0f;
 
-    // Empty the stack before starting the search
-    stack.empty();
+    
 
-    // visit the first node
-    currentNode.visited = true;
-
+    
     // insert the node r into the queue
-    stack.push(&currentNode); // Add the start node to the queue
+    //openSet.push(&currentNode); // Add the start node to the queue
 
 
     // while the queue is not empty loop
-    while(!stack.empty())
+    while(!openSet.empty())
     {
         // add a slight delay for visualization purposes
-        // This is one of the main differences between DFS and BFS
-        // BFS uses a queue, while DFS uses a stack
-        Node* n = stack.top(); // Get the front node from the queue
-        stack.pop(); // Remove the front node from the queue
+        //WaitTime(0.1f); // Uncomment if you want to add a delay for visualization
+        //WaitTime(0.01f);
+
+        // find the node with the lowest gCost
+        int lowestFCostNodeIndex = 0;
+        for(int i = 0; i < openSet.size(); i++) {
+            if(openSet[i]->fCost < openSet[lowestFCostNodeIndex]->fCost) {
+                lowestFCostNodeIndex = i; // Update the index of the node with the lowest gCost
+            }
+        }
+        Node* lowestFCostNode = openSet[lowestFCostNodeIndex]; // Get the node with
+        // the lowest gCost from the openSet
+        // Remove the node from the openSet
+        openSet.erase(openSet.begin() + lowestFCostNodeIndex); // Remove the node
+
+        // mark the node as visited
+        lowestFCostNode->visited = true; // Mark the node as visited
+
+
+        //openSet.pop(); // Remove the front node from the queue
         // Check if we reached the end node
-        if (n->position.x == _endNode.position.x && n->position.y == _endNode.position.y) {
-            std::cout << "Reached the end node at: (" << n->position.x << ", " << n->position.y << ")\n";
+        if (lowestFCostNode->position.x == _endNode.position.x && lowestFCostNode->position.y == _endNode.position.y) {
+            std::cout << "Reached the end node at: (" << lowestFCostNode->position.x << ", " << lowestFCostNode->position.y << ")\n";
             // start retracing the path
-            Node* pathNode = n; // Start from the end node
+            Node* pathNode = lowestFCostNode; // Start from the end node
             while (pathNode != nullptr) {
                 pathNode->isPath = true; // Mark the node as part of the path
-                    pathNode = pathNode->parent; // Move to the parent node
+                pathNode = pathNode->parent; // Move to the parent node
             }
             return; // Exit if the end node is reached
         }
@@ -142,44 +164,85 @@ void AStar::AStarSearch(Node &_startNode, Node &_endNode)
         // for(each unmarked Node s adjacent to n){ 
         // how to get adjacent nodes?
         // get the node to the right and left
+        // also calculate the gCost for each adjacent node, and update the parent node if necessary
 
+        // Right Neighbor
         // Check if the adjacent nodes are within bounds
-        if (n->position.x + 1 < gridWidth && n->position.y < gridHeight) {
-            Node& rightNode = nodeVector->at(n->position.x + 1).at(n->position.y);
-            if (!rightNode.visited && !rightNode.isObstacle) {
-                rightNode.visited = true; // Mark the node as visited
-                rightNode.parent = n; // Set the parent node
-                stack.push(&rightNode); // Add the adjacent node to the queue
+        if (lowestFCostNode->position.x + 1 < gridWidth && lowestFCostNode->position.y < gridHeight) {
+            Node& neighbour = nodeVector->at(lowestFCostNode->position.x + 1).at(lowestFCostNode->position.y);
+            if (!neighbour.visited && !neighbour.isObstacle) {
+                // Calculate the gCost for the right node
+                UpdateNeighbourCost(*lowestFCostNode, neighbour, _endNode, openSet); // Update the neighbour cost
             }
         }
 
+        // Down Neighbor
         // check if the adjacent nodes are within bounds
-        if (n->position.x < gridWidth && n->position.y + 1 < gridHeight) {
-            Node& downNode = nodeVector->at(n->position.x).at(n->position.y + 1);
-            if (!downNode.visited && !downNode.isObstacle) {
-                downNode.visited = true; // Mark the node as visited
-                downNode.parent = n; // Set the parent node
-                stack.push(&downNode); // Add the adjacent node to the queue
+        if (lowestFCostNode->position.x < gridWidth && lowestFCostNode->position.y + 1 < gridHeight) {
+            Node& neighbour = nodeVector->at(lowestFCostNode->position.x).at(lowestFCostNode->position.y + 1);
+            if (!neighbour.visited && !neighbour.isObstacle) {
+                // Calculate the gCost for the down node
+                UpdateNeighbourCost(*lowestFCostNode, neighbour, _endNode, openSet); // Update the neighbour cost
             }
         }
 
-        if (n->position.x - 1 >= 0 && n->position.y < gridHeight) {
-            Node& leftNode = nodeVector->at(n->position.x - 1).at(n->position.y);
-            if (!leftNode.visited && !leftNode.isObstacle) {
-                leftNode.visited = true; // Mark the node as visited
-                leftNode.parent = n; // Set the parent node
-                stack.push(&leftNode); // Add the adjacent node to the queue
-            }
-        }
-        if (n->position.x < gridWidth && n->position.y - 1 >= 0) {
-            Node& upNode = nodeVector->at(n->position.x).at(n->position.y - 1);
-            if (!upNode.visited && !upNode.isObstacle) {
-                upNode.visited = true; // Mark the node as visited
-                upNode.parent = n; // Set the parent node
-                stack.push(&upNode); // Add the adjacent node to the queue
+        // Left Neighbor
+        if (lowestFCostNode->position.x - 1 >= 0 && lowestFCostNode->position.y < gridHeight) {
+            Node& neighbour = nodeVector->at(lowestFCostNode->position.x - 1).at(lowestFCostNode->position.y);
+            if (!neighbour.visited && !neighbour.isObstacle) {
+                // Calculate the gCost for the left node
+                UpdateNeighbourCost(*lowestFCostNode, neighbour, _endNode, openSet); // Update the neighbour cost
             }
         }
 
-        
+        // Up Neighbor
+        if (lowestFCostNode->position.x < gridWidth && lowestFCostNode->position.y - 1 >= 0) {
+            Node& neighbour = nodeVector->at(lowestFCostNode->position.x).at(lowestFCostNode->position.y - 1);
+            if (!neighbour.visited && !neighbour.isObstacle) {
+                // Calculate the gCost for the up node
+                UpdateNeighbourCost(*lowestFCostNode, neighbour, _endNode, openSet); // Update the neighbour cost
+            }
+        }
     }   // end while
+}
+
+void AStar::UpdateNeighbourCost(Node& _lowestGCostNode, Node& _neighbour, Node& _endNode, std::vector<Node*>& _openSet){
+    float newGCost = _lowestGCostNode.gCost + 1.0f; // Assuming a cost of 1 for moving to an adjacent node
+    
+    if (newGCost < _neighbour.gCost) {
+        _neighbour.parent = &_lowestGCostNode; // Set the parent node
+        _neighbour.gCost = newGCost; // Update the gCost
+
+        // Calculate the H cost, heuristic cost (hCost) using Manhattan distance
+        _neighbour.hCost = fabs(_neighbour.position.x - _endNode.position.x) + fabs(_neighbour.position.y - _endNode.position.y);
+
+        // Calculate the total cost (fCost)
+        float newFCost = _neighbour.gCost + _neighbour.hCost; // Calculate the total cost
+        _neighbour.fCost = newFCost; // Update the fCost
+
+        // CHECK if neighbor is in the openSet. If not, add it.
+        bool inOpenSet = false;
+        for(Node* node : _openSet) {
+            if (node == &_neighbour) {
+                inOpenSet = true;
+                break;
+            }
+        }
+        if (!inOpenSet) {
+            _openSet.push_back(&_neighbour);
+        }
+    }
+}
+
+// Reset the grid to its initial state
+void AStar::ResetGrid(int _gridWidth, int _gridHeight, int _gridSize) {
+    for (int x = 0; x < _gridWidth; ++x) {
+        for (int y = 0; y < _gridHeight; ++y) {
+            Node& node = nodeVector->at(x).at(y);
+            node.gCost = FLT_MAX; // Your constructor already does this, but it's good practice
+            node.parent = nullptr;
+            node.visited = false;
+            node.isPath = false;
+        }
+    }
 }

@@ -3,7 +3,6 @@
 #include <iostream>
 
 // forward declaration of the function to update the neighbour cost
-void UpdateNeighbourCost(Node& _lowestGCostNode, Node& _neighbour,std::vector<Node*>& _openSet);
 Diykstra::Diykstra(int _gridWidth, int _gridHeight, int _gridSize) : gridWidth(_gridWidth), gridHeight(_gridHeight), gridSize(_gridSize)
 {
     // Initialize the node grid
@@ -242,7 +241,7 @@ void Diykstra::DijkstraSearch(Node &_startNode, Node &_endNode)
     }   // end while
 }
 
-void UpdateNeighbourCost(Node& _lowestGCostNode, Node& _neighbour,std::vector<Node*>& _openSet){
+void Diykstra::UpdateNeighbourCost(Node& _lowestGCostNode, Node& _neighbour,std::vector<Node*>& _openSet){
     float newGCost = _lowestGCostNode.gCost + 1.0f; // Assuming a cost of 1 for moving to an adjacent node
     if (newGCost < _neighbour.gCost) {
         _neighbour.gCost = newGCost; // Update the gCost

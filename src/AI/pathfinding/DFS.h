@@ -15,6 +15,7 @@ public:
     void SetGridSize(int width, int height);
     void CreateRandomObstacles(int obstacleCount) override;
     void DepthFirstSearch(Node& _startNode, Node& _endNode);
+    void ResetGrid(int _gridWidth, int _gridHeight, int _gridSize) override;  
     
 private:
     std::unique_ptr<std::vector<std::vector<Node>>> nodeVector;

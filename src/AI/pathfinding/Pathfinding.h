@@ -10,4 +10,5 @@ public:
     virtual void OnRender() const = 0;
     virtual void OnEnd() = 0;
     virtual void CreateRandomObstacles(int obstacleCount) = 0;
+    virtual void ResetGrid(int _gridWidth, int _gridHeight, int _gridSize) = 0;
 };
