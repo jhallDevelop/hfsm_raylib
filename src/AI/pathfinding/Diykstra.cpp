@@ -3,73 +3,41 @@
 #include <iostream>
 
 // forward declaration of the function to update the neighbour cost
-Diykstra::Diykstra(int _gridWidth, int _gridHeight, int _gridSize) : gridWidth(_gridWidth), gridHeight(_gridHeight), gridSize(_gridSize)
+Diykstra::Diykstra(int _gridWidth, int _gridHeight, int _gridSize, std::vector<std::vector<Node*>>& _nodeVector) : gridWidth(_gridWidth), gridHeight(_gridHeight), gridSize(_gridSize)
 {
     // Initialize the node grid
-    nodeVector = std::make_unique<std::vector<std::vector<Node>>>();
-    // Initialize the node grid
-    Node::CreateNodeGrid(nodeVector.get(), gridWidth, gridHeight);
+    Node::CreateNodeGrid(_nodeVector, gridWidth, gridHeight);
 }
 
 Diykstra::~Diykstra()
 {
 }
 
-void Diykstra::OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2])
+void Diykstra::OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2], std::vector<std::vector<Node*>>& _nodeVector)
 {
     // Convert start and end positions to Node objects
     // Call the DFS algorithm starting from the startNode
-    Node& startNode = nodeVector->at(_nodeIndexStart[0]).at(_nodeIndexStart[1]); // Example: starting node
+    Node& startNode = *_nodeVector.at(_nodeIndexStart[0]).at(_nodeIndexStart[1]); // Example: starting node
     startNode.visited = true; // Mark the start node as visited
     startNode.isPath = true; // Mark the start node as part of the path
     startNode.isObstacle = false; // Ensure the start node is not an obstacle   
 
     // End Node
-    Node& endNode = nodeVector->at(_nodeIndexEnd[0]).at(_nodeIndexEnd[1]); // Example: ending node
+    Node& endNode = *_nodeVector.at(_nodeIndexEnd[0]).at(_nodeIndexEnd[1]); // Example: ending node
     //endNode.visited = true; // Mark the end node as visited
     endNode.isPath = true; // Mark the start node as part of the path
     endNode.isObstacle = false; // Ensure the start node is not an obstacle 
     endNode.visited = false; // Ensure the end node is not visited
 
-    DijkstraSearch(startNode, endNode);
+    DijkstraSearch(startNode, endNode, _nodeVector);
 
 }
 
 void Diykstra::OnUpdate() const
-{for(int x = 0; x < gridWidth; x++)
-    {
-        for(int y = 0; y < gridHeight; y++)
-        {
-            // Render each node in the grid
-            // draw obstacles and visited nodes
-            Node& currentNode = nodeVector->at(x).at(y);
-            Color color = WHITE; // Default color for nodes
-
-            // tile is obstacle: Set tile color to black
-            if (currentNode.isObstacle == true) {
-                color = BLACK;
-            } 
-
-            // Tile is Visited: Set tile color to light grey
-            if(currentNode.visited && !currentNode.isObstacle) {
-                color = LIGHTGRAY;
-            }
-
-            // Tile is Path: Set tile color to green
-            if(currentNode.isPath == true) {
-                color = GREEN; // Color for path nodes
-            }
-
-            // Draw the tile
-            DrawRectangle(
-                static_cast<int>(currentNode.position.x * gridSize), // Scale for visibility
-                static_cast<int>(currentNode.position.y * gridSize),
-                gridSize, gridSize, color); // Draw the node rectangle
-        }
-    }
+{
 }
 
-void Diykstra::OnRender() const
+void Diykstra::OnRender(std::vector<std::vector<Node*>>& _nodeVector) const
 {
     for(int x = 0; x < gridWidth; x++)
     {
@@ -77,7 +45,7 @@ void Diykstra::OnRender() const
         {
             // Render each node in the grid
             // draw obstacles and visited nodes
-            Node& currentNode = nodeVector->at(x).at(y);
+            Node& currentNode = *_nodeVector.at(x).at(y);
             Color color = WHITE; // Default color for nodes
 
             // tile is obstacle: Set tile color to black
@@ -108,32 +76,11 @@ void Diykstra::OnEnd()
 {
 }
 
-void Diykstra::CreateRandomObstacles(int obstacleCount)
-{
-    // Create random obstacles in the Dijkstra grid
-    if (!nodeVector) {
-        TraceLog(LOG_WARNING, "nodeVector is null");
-        return; // Check if the node vector is initialized
-    }
 
-    // randomly select nodes to be obstacles
-    if (obstacleCount <= 0 || obstacleCount > gridWidth * gridHeight) {
-        TraceLog(LOG_WARNING, "Invalid obstacle count: %d", obstacleCount);
-        return; // Invalid obstacle count
-    }
-    
-    // for loop to create obstacles
-    for (int i = 0; i < obstacleCount; ++i) {
-        int x = GetRandomValue(0, gridWidth - 1);
-        int y = GetRandomValue(0, gridHeight - 1);
-        nodeVector.get()->at(x).at(y).isObstacle = true; // Mark the node as an obstacle
-    }
-}
-
-void Diykstra::DijkstraSearch(Node &_startNode, Node &_endNode)
+void Diykstra::DijkstraSearch(Node &_startNode, Node &_endNode, std::vector<std::vector<Node*>>& _nodeVector)
 {
     // Reset the grid to its initial state
-    ResetGrid(gridWidth, gridHeight, gridSize);
+    ResetGrid(gridWidth, gridHeight, gridSize, _nodeVector);
     
     // Implementation of the Dijkstra algorithm
     // This function will be called to perform the Dijkstra search starting from the given node
@@ -150,9 +97,6 @@ void Diykstra::DijkstraSearch(Node &_startNode, Node &_endNode)
     // set the gCost of the start node to 0
     currentNode.gCost = 0.0f;
 
-    
-
-    
     // insert the node r into the queue
     //openSet.push(&currentNode); // Add the start node to the queue
 
@@ -202,7 +146,7 @@ void Diykstra::DijkstraSearch(Node &_startNode, Node &_endNode)
         // Right Neighbor
         // Check if the adjacent nodes are within bounds
         if (lowestGCostNode->position.x + 1 < gridWidth && lowestGCostNode->position.y < gridHeight) {
-            Node& neighbour = nodeVector->at(lowestGCostNode->position.x + 1).at(lowestGCostNode->position.y);
+            Node& neighbour = *_nodeVector.at(lowestGCostNode->position.x + 1).at(lowestGCostNode->position.y);
             if (!neighbour.visited && !neighbour.isObstacle) {
                 // Calculate the gCost for the right node
                 UpdateNeighbourCost(*lowestGCostNode, neighbour, openSet); // Update the neighbour cost
@@ -212,7 +156,7 @@ void Diykstra::DijkstraSearch(Node &_startNode, Node &_endNode)
         // Down Neighbor
         // check if the adjacent nodes are within bounds
         if (lowestGCostNode->position.x < gridWidth && lowestGCostNode->position.y + 1 < gridHeight) {
-            Node& neighbour = nodeVector->at(lowestGCostNode->position.x).at(lowestGCostNode->position.y + 1);
+            Node& neighbour = *_nodeVector.at(lowestGCostNode->position.x).at(lowestGCostNode->position.y + 1);
             if (!neighbour.visited && !neighbour.isObstacle) {
                 // Calculate the gCost for the down node
                 UpdateNeighbourCost(*lowestGCostNode, neighbour, openSet); // Update the neighbour cost
@@ -221,7 +165,7 @@ void Diykstra::DijkstraSearch(Node &_startNode, Node &_endNode)
 
         // Left Neighbor
         if (lowestGCostNode->position.x - 1 >= 0 && lowestGCostNode->position.y < gridHeight) {
-            Node& neighbour = nodeVector->at(lowestGCostNode->position.x - 1).at(lowestGCostNode->position.y);
+            Node& neighbour = *_nodeVector.at(lowestGCostNode->position.x - 1).at(lowestGCostNode->position.y);
             if (!neighbour.visited && !neighbour.isObstacle) {
                 // Calculate the gCost for the left node
                 UpdateNeighbourCost(*lowestGCostNode, neighbour, openSet); // Update the neighbour cost
@@ -230,7 +174,7 @@ void Diykstra::DijkstraSearch(Node &_startNode, Node &_endNode)
 
         // Up Neighbor
         if (lowestGCostNode->position.x < gridWidth && lowestGCostNode->position.y - 1 >= 0) {
-            Node& neighbour = nodeVector->at(lowestGCostNode->position.x).at(lowestGCostNode->position.y - 1);
+            Node& neighbour = *_nodeVector.at(lowestGCostNode->position.x).at(lowestGCostNode->position.y - 1);
             if (!neighbour.visited && !neighbour.isObstacle) {
                 // Calculate the gCost for the up node
                 UpdateNeighbourCost(*lowestGCostNode, neighbour, openSet); // Update the neighbour cost
@@ -259,18 +203,6 @@ void Diykstra::UpdateNeighbourCost(Node& _lowestGCostNode, Node& _neighbour,std:
     }
 }
 
-// Reset the grid to its initial state
-void Diykstra::ResetGrid(int _gridWidth, int _gridHeight, int _gridSize) {
-    for (int x = 0; x < _gridWidth; ++x) {
-        for (int y = 0; y < _gridHeight; ++y) {
-            Node& node = nodeVector->at(x).at(y);
-            node.gCost = FLT_MAX; // Your constructor already does this, but it's good practice
-            node.parent = nullptr;
-            node.visited = false;
-            node.isPath = false;
-        }
-    }
-}
 
 Vector2 Diykstra::GetNextWaypoint()
 {

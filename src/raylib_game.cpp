@@ -35,7 +35,7 @@ static const int SCREEN_WIDTH = 800;
 static const int SCREEN_HEIGHT = 450;
 int const GRID_SIZE = 20; // Example grid width
 const char* GAME_TITLE = "HFSM Example"; // Game title
-const char* GAME_DESCRIPTION = "W, A, S, D to Move"; // Game description
+const char* GAME_DESCRIPTION = "W, A, S, D to Move, 1, 2, 3, 4 for AI Type"; // Game description
 enum PathfindingType {
     BFS_TYPE,
     DFS_TYPE,
@@ -46,6 +46,9 @@ enum PathfindingType {
 // Assets
 const char* FONT_FILE_PATH = "resources/mecha.png"; // Font file path
 
+// store the pathfinding algorithms
+
+
 // Game Data containing Pawns & AI State Machine
 typedef struct GameData {
     std::unique_ptr<Pawn> playerPawn; // Player controlled pawn
@@ -53,9 +56,15 @@ typedef struct GameData {
     std::unique_ptr<AI_HSFM> enemyAIStateMachine; // AI state machine
     std::unique_ptr<Weapon> playerWeapon; // Player's weapon
     std::unique_ptr<Weapon> enemyWeapon; // Enemy's weapon (if needed)
-    std::unique_ptr<Pathfinding> pathfinding; // Pathfinding algorithm (if needed)
+    // Pathfinding
+    std::shared_ptr<Pathfinding> pathfinding; // Pathfinding algorithm (if needed)
+    std::shared_ptr<Pathfinding> aStarPathfinding;
+    std::shared_ptr<Pathfinding> bfsPathfinding;
+    std::shared_ptr<Pathfinding> dfsPathfinding;
+    std::shared_ptr<Pathfinding> diykstraPathfinding;
     // Font
     Font font;
+    std::shared_ptr<std::vector<std::vector<Node*>>> nodeVector; // Node grid for pathfinding
     PathfindingType pathFindingType;
     std::unique_ptr<Pawn> pathfindingTarget; // Target for pathfinding (if needed)
     int gridSize[2]; // Size of each node in the grid
@@ -71,7 +80,7 @@ void UpdateAI(GameData& _gameData);
 void UpdatePawns(GameData& _gameData);
 void GameUpdate(); // Update game logic
 void WrapPawnPosition(Pawn& _pawn); // Wrap pawn position to screen bounds
-
+void SwapToPathfindingAlgorithm(GameData& _gameData, PathfindingType _pathfindingType); // Swap pathfinding algorithm
 
 
 //----------------------------------------------------------------------------------
@@ -93,7 +102,7 @@ int main(void)
     gameData->enemyPawn= std::make_unique<Pawn>();
     gameData->enemyAIStateMachine = std::make_unique<AI_HSFM>();
     gameData->pathfindingTarget = std::make_unique<Pawn>(); // Create a target for pathfinding (if needed)
-
+    gameData->nodeVector = std::make_shared<std::vector<std::vector<Node*>>>();
 
     // Initialise the pawns and AI state machine
     // get a reference to the player, enemy pawns and AI state machine
@@ -118,37 +127,22 @@ int main(void)
     enemyPawn->SetWeapon(gameData->enemyWeapon.get()); // Assign the weapon to the
     enemyAIStateMachine->TransitionToState(*enemyPawn, e_AI_StateID::Pathfind); // Start in wander state
 
-
-    // Load global data (assets that must be available in all screens, i.e. font)
+   // Load global data (assets that must be available in all screens, i.e. font)
     gameData.get()->font = LoadFont(FONT_FILE_PATH);
     Font* font = &gameData.get()->font; // Get a pointer to the font
 
     // setup the pathfinding algorithm
-    
     int const randomObstacleCount = 250; // Number of random obstacles to create
 
-
     // ==============  Pathfinding  ================
-    gameData.get()->pathFindingType = PathfindingType::A_STAR_TYPE;
-    switch (gameData.get()->pathFindingType)
-    {
-    case PathfindingType::BFS_TYPE:
-        gameData->pathfinding = std::make_unique<BFS>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE);
-        break;
-
-    case PathfindingType::DFS_TYPE:
-        gameData->pathfinding = std::make_unique<DFS>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE);
-        break;
-
-    case PathfindingType::DIYKSTRA_TYPE:
-        gameData->pathfinding = std::make_unique<Diykstra>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE);
-        break;
-
-    case PathfindingType::A_STAR_TYPE:
-        gameData->pathfinding = std::make_unique<AStar>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE);
-        break;
-    
-    }
+    std::vector<std::vector<Node*>>& nodeVector = *gameData.get()->nodeVector.get();
+    // create all the pathfinding algorithms
+    gameData.get()->bfsPathfinding = std::make_unique<BFS>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE, nodeVector);
+    gameData.get()->dfsPathfinding = std::make_unique<DFS>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE, nodeVector);
+    gameData.get()->diykstraPathfinding = std::make_unique<Diykstra>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE, nodeVector);
+    gameData.get()->aStarPathfinding = std::make_unique<AStar>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE, nodeVector);
+    gameData.get()->pathFindingType = PathfindingType::BFS_TYPE;
+    SwapToPathfindingAlgorithm(*gameData, gameData.get()->pathFindingType); // Swap to the A* pathfinding algorithm
     
     std::cout << "Pathfinding algorithm initialized." << std::endl;
     Pathfinding* pathfinding = gameData->pathfinding.get();
@@ -156,13 +150,13 @@ int main(void)
         TraceLog(LOG_ERROR, "Failed to cast pathfinding to pathfinding");
         return -1; // Exit if casting fails
     }
-    
-    pathfinding->CreateRandomObstacles(randomObstacleCount); // Create random obstacles in the grid
+
     // pick a random start and end node for the pathfinding algorithm
     int startNodeIndex[2] = { (int)(playerPawn->GetPosition().x/GRID_SIZE), (int)(playerPawn->GetPosition().y/GRID_SIZE)};
     int endNodeIndex[2] = { (int)(enemyPawn->GetPosition().x/GRID_SIZE), (int)(enemyPawn->GetPosition().y/GRID_SIZE)};
-    pathfinding->OnStart(startNodeIndex, endNodeIndex); // Initialize the pathfinding algorithm
+    pathfinding->OnStart(startNodeIndex, endNodeIndex, nodeVector); // Initialize the pathfinding algorithm
 
+    pathfinding->CreateRandomObstacles(nodeVector, (int)SCREEN_WIDTH/GRID_SIZE, (int)SCREEN_HEIGHT/GRID_SIZE, randomObstacleCount); // Create random obstacles in the grid
     
     
 
@@ -202,7 +196,7 @@ int main(void)
 void Draw(const GameData& _gameData){
 
     // render the pathfinding
-    _gameData.pathfinding->OnRender(); // Render the pathfinding grid
+    _gameData.pathfinding->OnRender(*gameData.get()->nodeVector.get()); // Render the pathfinding grid
 
 
     // TODO: Draw gameplay text
@@ -221,7 +215,6 @@ void Draw(const GameData& _gameData){
         snprintf(pathfindingTypeCharBuffer, sizeof(pathfindingTypeCharBuffer), "Pathfinding: BFS");
         break;
     case PathfindingType::DFS_TYPE:
-        
         snprintf(pathfindingTypeCharBuffer, sizeof(pathfindingTypeCharBuffer), "Pathfinding: DFS");
         break;
     case PathfindingType::DIYKSTRA_TYPE:
@@ -281,7 +274,7 @@ void UpdateAI(GameData& _gameData)
     int startNodeIndex[2] = { startX, startY };
     int endNodeIndex[2]   = { endX, endY };
 
-    pathfinding->OnStart(startNodeIndex, endNodeIndex);
+    pathfinding->OnStart(startNodeIndex, endNodeIndex, *gameData.get()->nodeVector.get()); // Initialize the pathfinding algorithm with the clamped indices
 
     // --- 2. Get the Current Waypoint (in Grid Coordinates) ---
     Vector2 currentWaypointGrid = pathfinding->GetNextWaypoint();
@@ -432,4 +425,48 @@ void UpdateInput(Pawn& _pawn)
     
     // Apply the steering force
     _pawn.ApplyForce(steer);
+
+    // update input to choose AI Pathfinding algorithm
+    if (IsKeyPressed(KEY_ONE)) {
+        gameData.get()->pathFindingType = PathfindingType::BFS_TYPE;
+        SwapToPathfindingAlgorithm(*gameData, gameData.get()->pathFindingType); //
+        std::cout << "Switched to BFS Pathfinding Algorithm." << std::endl;
+    }
+    else if (IsKeyPressed(KEY_TWO)) {
+        gameData.get()->pathFindingType = PathfindingType::DFS_TYPE;
+        SwapToPathfindingAlgorithm(*gameData, gameData.get()->pathFindingType);
+        std::cout << "Switched to DFS Pathfinding Algorithm." << std::endl;
+    }
+    else if (IsKeyPressed(KEY_THREE)) {
+        gameData.get()->pathFindingType = PathfindingType::DIYKSTRA_TYPE;
+        SwapToPathfindingAlgorithm(*gameData, gameData.get()->pathFindingType);
+        std::cout << "Switched to Diykstra Pathfinding Algorithm." << std::endl;
+    }
+    else if (IsKeyPressed(KEY_FOUR)) {
+        gameData.get()->pathFindingType = PathfindingType::A_STAR_TYPE;
+        SwapToPathfindingAlgorithm(*gameData, gameData.get()->pathFindingType);
+        std::cout << "Switched to A* Pathfinding Algorithm." << std::endl;
+    }
+}
+
+
+void SwapToPathfindingAlgorithm(GameData& _gameData, PathfindingType _pathfindingType){
+    switch (_pathfindingType)
+    {
+    case PathfindingType::BFS_TYPE:
+        _gameData.pathfinding = gameData.get()->bfsPathfinding;
+        break;
+
+    case PathfindingType::DFS_TYPE:
+        _gameData.pathfinding = gameData.get()->dfsPathfinding;
+        break;
+
+    case PathfindingType::DIYKSTRA_TYPE:
+        _gameData.pathfinding = gameData.get()->diykstraPathfinding;
+        break;
+
+    case PathfindingType::A_STAR_TYPE:
+        _gameData.pathfinding = gameData.get()->aStarPathfinding;
+        break;
+    }
 }

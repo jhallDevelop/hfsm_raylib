@@ -36,10 +36,10 @@ PROJECT_SOURCE_FILES  ?= $(wildcard *.cpp *.c \
                             src/*.cpp src/*.c \
                             AI/*.c AI/*.cpp \
                             AI/pathfinding/*.c AI/pathfinding/*.cpp \
-                            AI/state_machine/*.c AI/state_machine/*.cpp);
+                            AI/state_machine/*.c AI/state_machine/*.cpp)
 
 # raylib library variables
-RAYLIB_SRC_PATH       ?= C:/raylib/raylib/src#/Users/ak76/Projects/SDK/raylib/src#../../raylib/src # !!!! Replace with your raylib source path
+RAYLIB_SRC_PATH       ?= /Users/ak76/Projects/SDK/raylib/src#../../raylib/src # !!!! Replace with your raylib source path
 RAYLIB_INCLUDE_PATH   ?= $(RAYLIB_SRC_PATH)
 RAYLIB_LIB_PATH       ?= $(RAYLIB_SRC_PATH)
 
@@ -47,7 +47,7 @@ RAYLIB_LIB_PATH       ?= $(RAYLIB_SRC_PATH)
 RAYLIB_LIBTYPE        ?= STATIC
 
 # Define compiler path on Windows
-COMPILER_PATH         ?= C:\raylib\w64devkit\bin #/usr/bin # !!!! Replace with your compiler path
+COMPILER_PATH         ?= /usr/bin # !!!! Replace with your compiler path
 
 # Build mode for project: DEBUG or RELEASE
 BUILD_MODE            ?= RELEASE

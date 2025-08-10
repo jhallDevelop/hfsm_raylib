@@ -1,42 +1,43 @@
 #include "raylib.h"
 #include "A_Star.h"
 #include <iostream>
-AStar::AStar(int _gridWidth, int _gridHeight, int _gridSize) : gridWidth(_gridWidth), gridHeight(_gridHeight), gridSize(_gridSize)
+AStar::AStar(int _gridWidth, int _gridHeight, int _gridSize, std::vector<std::vector<Node*>>& _nodeVector) : gridWidth(_gridWidth), gridHeight(_gridHeight), gridSize(_gridSize)
 {
     // Initialize the node grid
-    nodeVector = std::make_unique<std::vector<std::vector<Node>>>();
-    // Initialize the node grid
-    Node::CreateNodeGrid(nodeVector.get(), gridWidth, gridHeight);
+    Node::CreateNodeGrid(_nodeVector, gridWidth, gridHeight);
 }
 
 AStar::~AStar()
 {
 }
 
-void AStar::OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2])
+void AStar::OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2], std::vector<std::vector<Node*>>& _nodeVector)
 {
+    // Reset the grid to its initial state
+    ResetGrid(gridWidth, gridHeight, gridSize, _nodeVector);
+
     // Convert start and end positions to Node objects
-    // Call the DFS algorithm starting from the startNode
-    Node& startNode = nodeVector->at(_nodeIndexStart[0]).at(_nodeIndexStart[1]); // Example: starting node
+    // Call the A* algorithm starting from the startNode
+    Node& startNode = *_nodeVector.at(_nodeIndexStart[0]).at(_nodeIndexStart[1]); // Example: starting node
     startNode.visited = true; // Mark the start node as visited
     startNode.isPath = true; // Mark the start node as part of the path
     startNode.isObstacle = false; // Ensure the start node is not an obstacle   
 
     // End Node
-    Node& endNode = nodeVector->at(_nodeIndexEnd[0]).at(_nodeIndexEnd[1]); // Example: ending node
+    Node& endNode = *_nodeVector.at(_nodeIndexEnd[0]).at(_nodeIndexEnd[1]); // Example: ending node
     //endNode.visited = true; // Mark the end node as visited
     endNode.isPath = true; // Mark the start node as part of the path
     endNode.isObstacle = false; // Ensure the start node is not an obstacle 
     endNode.visited = false; // Ensure the end node is not visited
 
-    AStarSearch(startNode, endNode);
+    AStarSearch(startNode, endNode, _nodeVector);
 }
 
 void AStar::OnUpdate() const
 {
 }
 
-void AStar::OnRender() const
+void AStar::OnRender(std::vector<std::vector<Node*>>& _nodeVector) const
 {
     for(int x = 0; x < gridWidth; x++)
     {
@@ -44,7 +45,7 @@ void AStar::OnRender() const
         {
             // Render each node in the grid
             // draw obstacles and visited nodes
-            Node& currentNode = nodeVector->at(x).at(y);
+            Node& currentNode = *_nodeVector.at(x).at(y);
             Color color = WHITE; // Default color for nodes
 
             // tile is obstacle: Set tile color to black
@@ -75,32 +76,23 @@ void AStar::OnEnd()
 {
 }
 
-void AStar::CreateRandomObstacles(int obstacleCount)
-{
-    // Create random obstacles in the DFS grid
-    if (!nodeVector) {
-        TraceLog(LOG_WARNING, "nodeVector is null");
-        return; // Check if the node vector is initialized
-    }
 
-    // randomly select nodes to be obstacles
-    if (obstacleCount <= 0 || obstacleCount > gridWidth * gridHeight) {
-        TraceLog(LOG_WARNING, "Invalid obstacle count: %d", obstacleCount);
-        return; // Invalid obstacle count
-    }
+
+void AStar::AStarSearch(Node &_startNode, Node &_endNode, std::vector<std::vector<Node*>>& _nodeVector)
+{
     
-    // for loop to create obstacles
-    for (int i = 0; i < obstacleCount; ++i) {
-        int x = GetRandomValue(0, gridWidth - 1);
-        int y = GetRandomValue(0, gridHeight - 1);
-        nodeVector.get()->at(x).at(y).isObstacle = true; // Mark the node as an obstacle
-    }
-}
-
-void AStar::AStarSearch(Node &_startNode, Node &_endNode)
-{
     // Reset the grid to its initial state
-    ResetGrid(gridWidth, gridHeight, gridSize);
+    ResetGrid(gridWidth, gridHeight, gridSize, _nodeVector);
+
+    _startNode.visited = true; // Mark the start node as visited
+    _startNode.isPath = true; // Mark the start node as part of the path
+    _startNode.isObstacle = false; // Ensure the start node is not an obstacle   
+
+    // End Node
+    //endNode.visited = true; // Mark the end node as visited
+    _endNode.isPath = true; // Mark the start node as part of the path
+    _endNode.isObstacle = false; // Ensure the start node is not an obstacle 
+    _endNode.visited = false; // Ensure the end node is not visited
     
     // Implementation of the Dijkstra algorithm
     // This function will be called to perform the Dijkstra search starting from the given node
@@ -170,7 +162,7 @@ void AStar::AStarSearch(Node &_startNode, Node &_endNode)
         // Right Neighbor
         // Check if the adjacent nodes are within bounds
         if (lowestFCostNode->position.x + 1 < gridWidth && lowestFCostNode->position.y < gridHeight) {
-            Node& neighbour = nodeVector->at(lowestFCostNode->position.x + 1).at(lowestFCostNode->position.y);
+            Node& neighbour = *_nodeVector.at(lowestFCostNode->position.x + 1).at(lowestFCostNode->position.y);
             if (!neighbour.visited && !neighbour.isObstacle) {
                 // Calculate the gCost for the right node
                 UpdateNeighbourCost(*lowestFCostNode, neighbour, _endNode, openSet); // Update the neighbour cost
@@ -180,7 +172,7 @@ void AStar::AStarSearch(Node &_startNode, Node &_endNode)
         // Down Neighbor
         // check if the adjacent nodes are within bounds
         if (lowestFCostNode->position.x < gridWidth && lowestFCostNode->position.y + 1 < gridHeight) {
-            Node& neighbour = nodeVector->at(lowestFCostNode->position.x).at(lowestFCostNode->position.y + 1);
+            Node& neighbour = *_nodeVector.at(lowestFCostNode->position.x).at(lowestFCostNode->position.y + 1);
             if (!neighbour.visited && !neighbour.isObstacle) {
                 // Calculate the gCost for the down node
                 UpdateNeighbourCost(*lowestFCostNode, neighbour, _endNode, openSet); // Update the neighbour cost
@@ -189,7 +181,7 @@ void AStar::AStarSearch(Node &_startNode, Node &_endNode)
 
         // Left Neighbor
         if (lowestFCostNode->position.x - 1 >= 0 && lowestFCostNode->position.y < gridHeight) {
-            Node& neighbour = nodeVector->at(lowestFCostNode->position.x - 1).at(lowestFCostNode->position.y);
+            Node& neighbour = *_nodeVector.at(lowestFCostNode->position.x - 1).at(lowestFCostNode->position.y);
             if (!neighbour.visited && !neighbour.isObstacle) {
                 // Calculate the gCost for the left node
                 UpdateNeighbourCost(*lowestFCostNode, neighbour, _endNode, openSet); // Update the neighbour cost
@@ -198,7 +190,7 @@ void AStar::AStarSearch(Node &_startNode, Node &_endNode)
 
         // Up Neighbor
         if (lowestFCostNode->position.x < gridWidth && lowestFCostNode->position.y - 1 >= 0) {
-            Node& neighbour = nodeVector->at(lowestFCostNode->position.x).at(lowestFCostNode->position.y - 1);
+            Node& neighbour = *_nodeVector.at(lowestFCostNode->position.x).at(lowestFCostNode->position.y - 1);
             if (!neighbour.visited && !neighbour.isObstacle) {
                 // Calculate the gCost for the up node
                 UpdateNeighbourCost(*lowestFCostNode, neighbour, _endNode, openSet); // Update the neighbour cost
@@ -235,18 +227,7 @@ void AStar::UpdateNeighbourCost(Node& _lowestGCostNode, Node& _neighbour, Node& 
     }
 }
 
-// Reset the grid to its initial state
-void AStar::ResetGrid(int _gridWidth, int _gridHeight, int _gridSize) {
-    for (int x = 0; x < _gridWidth; ++x) {
-        for (int y = 0; y < _gridHeight; ++y) {
-            Node& node = nodeVector->at(x).at(y);
-            node.gCost = FLT_MAX; // Your constructor already does this, but it's good practice
-            node.parent = nullptr;
-            node.visited = false;
-            node.isPath = false;
-        }
-    }
-}
+
 
 
 void AStar::StoreFinalPath(Node& _lowestCostNode, Node &_endNode)

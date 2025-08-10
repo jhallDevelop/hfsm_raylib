@@ -4,42 +4,42 @@
 #include "DFS.h"
 #include <iostream>
 
-DFS::DFS(int _gridWidth, int _gridHeight, int _gridSize) : gridWidth(_gridWidth), gridHeight(_gridHeight), gridSize(_gridSize)
+DFS::DFS(int _gridWidth, int _gridHeight, int _gridSize, std::vector<std::vector<Node*>>& _nodeVector) : gridWidth(_gridWidth), gridHeight(_gridHeight), gridSize(_gridSize)
 {
-    // Initialize the node grid
-    nodeVector = std::make_unique<std::vector<std::vector<Node>>>();
-    // Initialize the node grid
-    Node::CreateNodeGrid(nodeVector.get(), gridWidth, gridHeight);
+     // Initialize the node grid
+     Node::CreateNodeGrid(_nodeVector, gridWidth, gridHeight);
 }
 
 DFS::~DFS()
 {
 }
 
-void DFS::OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2])
+void DFS::OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2], std::vector<std::vector<Node*>>& _nodeVector)
 {
+   
+
     // Convert start and end positions to Node objects
     // Call the DFS algorithm starting from the startNode
-    Node& startNode = nodeVector->at(_nodeIndexStart[0]).at(_nodeIndexStart[1]); // Example: starting node
+    Node& startNode = *_nodeVector.at(_nodeIndexStart[0]).at(_nodeIndexStart[1]); // Example: starting node
     startNode.visited = true; // Mark the start node as visited
     startNode.isPath = true; // Mark the start node as part of the path
     startNode.isObstacle = false; // Ensure the start node is not an obstacle   
 
     // End Node
-    Node& endNode = nodeVector->at(_nodeIndexEnd[0]).at(_nodeIndexEnd[1]); // Example: ending node
+    Node& endNode = *_nodeVector.at(_nodeIndexEnd[0]).at(_nodeIndexEnd[1]); // Example: ending node
     //endNode.visited = true; // Mark the end node as visited
     endNode.isPath = true; // Mark the start node as part of the path
     endNode.isObstacle = false; // Ensure the start node is not an obstacle 
     endNode.visited = false; // Ensure the end node is not visited
 
-    DepthFirstSearch(startNode, endNode);
+    DepthFirstSearch(startNode, endNode, _nodeVector);
 }
 
 void DFS::OnUpdate() const
 {
 }
 
-void DFS::OnRender() const
+void DFS::OnRender(std::vector<std::vector<Node*>>& _nodeVector) const
 {
     for(int x = 0; x < gridWidth; x++)
     {
@@ -47,7 +47,7 @@ void DFS::OnRender() const
         {
             // Render each node in the grid
             // draw obstacles and visited nodes
-            Node& currentNode = nodeVector->at(x).at(y);
+            Node& currentNode = *_nodeVector.at(x).at(y);
             Color color = WHITE; // Default color for nodes
 
             // tile is obstacle: Set tile color to black
@@ -94,9 +94,9 @@ void DFS::SetGridSize(int width, int height)
     gridHeight = height;
 }
 
-void DFS::DepthFirstSearch(Node& _startNode, Node& _endNode)
+void DFS::DepthFirstSearch(Node& _startNode, Node& _endNode, std::vector<std::vector<Node*>>& _nodeVector)
 {
-    ResetGrid(gridWidth, gridHeight, gridSize);
+    ResetGrid(gridWidth, gridHeight, gridSize, _nodeVector);
     // Implementation of the DFS algorithm
     // This function will be called to perform the DFS search starting from the given node
     // used to scan
@@ -126,7 +126,7 @@ void DFS::DepthFirstSearch(Node& _startNode, Node& _endNode)
         stack.pop(); // Remove the front node from the queue
         // Check if we reached the end node
         if (n->position.x == _endNode.position.x && n->position.y == _endNode.position.y) {
-            std::cout << "Reached the end node at: (" << n->position.x << ", " << n->position.y << ")\n";
+            //std::cout << "Reached the end node at: (" << n->position.x << ", " << n->position.y << ")\n";
             // start retracing the path
             Node* pathNode = n; // Start from the end node
             while (pathNode != nullptr) {
@@ -142,7 +142,7 @@ void DFS::DepthFirstSearch(Node& _startNode, Node& _endNode)
 
         // Check if the adjacent nodes are within bounds
         if (n->position.x + 1 < gridWidth && n->position.y < gridHeight) {
-            Node& rightNode = nodeVector->at(n->position.x + 1).at(n->position.y);
+            Node& rightNode = *_nodeVector.at(n->position.x + 1).at(n->position.y);
             if (!rightNode.visited && !rightNode.isObstacle) {
                 rightNode.visited = true; // Mark the node as visited
                 rightNode.parent = n; // Set the parent node
@@ -152,7 +152,7 @@ void DFS::DepthFirstSearch(Node& _startNode, Node& _endNode)
 
         // check if the adjacent nodes are within bounds
         if (n->position.x < gridWidth && n->position.y + 1 < gridHeight) {
-            Node& downNode = nodeVector->at(n->position.x).at(n->position.y + 1);
+            Node& downNode = *_nodeVector.at(n->position.x).at(n->position.y + 1);
             if (!downNode.visited && !downNode.isObstacle) {
                 downNode.visited = true; // Mark the node as visited
                 downNode.parent = n; // Set the parent node
@@ -161,7 +161,7 @@ void DFS::DepthFirstSearch(Node& _startNode, Node& _endNode)
         }
 
         if (n->position.x - 1 >= 0 && n->position.y < gridHeight) {
-            Node& leftNode = nodeVector->at(n->position.x - 1).at(n->position.y);
+            Node& leftNode = *_nodeVector.at(n->position.x - 1).at(n->position.y);
             if (!leftNode.visited && !leftNode.isObstacle) {
                 leftNode.visited = true; // Mark the node as visited
                 leftNode.parent = n; // Set the parent node
@@ -169,7 +169,7 @@ void DFS::DepthFirstSearch(Node& _startNode, Node& _endNode)
             }
         }
         if (n->position.x < gridWidth && n->position.y - 1 >= 0) {
-            Node& upNode = nodeVector->at(n->position.x).at(n->position.y - 1);
+            Node& upNode = *_nodeVector.at(n->position.x).at(n->position.y - 1);
             if (!upNode.visited && !upNode.isObstacle) {
                 upNode.visited = true; // Mark the node as visited
                 upNode.parent = n; // Set the parent node
@@ -182,41 +182,9 @@ void DFS::DepthFirstSearch(Node& _startNode, Node& _endNode)
 } // end DepthFirstSearch
 
 
-void DFS::CreateRandomObstacles(int obstacleCount)
-{
-    
-    // Create random obstacles in the DFS grid
-    if (!nodeVector) {
-        TraceLog(LOG_WARNING, "nodeVector is null");
-        return; // Check if the node vector is initialized
-    }
 
-    // randomly select nodes to be obstacles
-    if (obstacleCount <= 0 || obstacleCount > gridWidth * gridHeight) {
-        TraceLog(LOG_WARNING, "Invalid obstacle count: %d", obstacleCount);
-        return; // Invalid obstacle count
-    }
-    
-    // for loop to create obstacles
-    for (int i = 0; i < obstacleCount; ++i) {
-        int x = GetRandomValue(0, gridWidth - 1);
-        int y = GetRandomValue(0, gridHeight - 1);
-        nodeVector.get()->at(x).at(y).isObstacle = true; // Mark the node as an obstacle
-    }
-}
 
-// Reset the grid to its initial state
-void DFS::ResetGrid(int _gridWidth, int _gridHeight, int _gridSize) {
-    for (int x = 0; x < _gridWidth; ++x) {
-        for (int y = 0; y < _gridHeight; ++y) {
-            Node& node = nodeVector->at(x).at(y);
-            node.gCost = FLT_MAX; // Your constructor already does this, but it's good practice
-            node.parent = nullptr;
-            node.visited = false;
-            node.isPath = false;
-        }
-    }
-}
+
 
 Vector2 DFS::GetNextWaypoint()
 {

@@ -4,43 +4,43 @@
 #include "BFS.h"
 #include <iostream>
 
-BFS::BFS(int _gridWidth, int _gridHeight, int _gridSize) : gridWidth(_gridWidth), gridHeight(_gridHeight), gridSize(_gridSize)
+BFS::BFS(int _gridWidth, int _gridHeight, int _gridSize, std::vector<std::vector<Node*>>& _nodeVector) : gridWidth(_gridWidth), gridHeight(_gridHeight), gridSize(_gridSize)
 {
     // Initialize the node grid
-    nodeVector = std::make_unique<std::vector<std::vector<Node>>>();
-    // Initialize the node grid
-    Node::CreateNodeGrid(nodeVector.get(), gridWidth, gridHeight);
+    Node::CreateNodeGrid(_nodeVector, gridWidth, gridHeight);   
 }
 
 BFS::~BFS()
 {
 }
 
-void BFS::OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2])
+void BFS::OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2], std::vector<std::vector<Node*>>& _nodeVector)
 {
+    
+
     // Convert start and end positions to Node objects
     
     // Call the BFS algorithm starting from the startNode
-    Node& startNode = nodeVector->at(_nodeIndexStart[0]).at(_nodeIndexStart[1]); // Example: starting node
+    Node& startNode =*_nodeVector.at(_nodeIndexStart[0]).at(_nodeIndexStart[1]); // Example: starting node
     startNode.visited = true; // Mark the start node as visited
     startNode.isPath = true; // Mark the start node as part of the path
     startNode.isObstacle = false; // Ensure the start node is not an obstacle   
 
     // End Node
-    Node& endNode = nodeVector->at(_nodeIndexEnd[0]).at(_nodeIndexEnd[1]); // Example: ending node
+    Node& endNode = *_nodeVector.at(_nodeIndexEnd[0]).at(_nodeIndexEnd[1]); // Example: ending node
     //endNode.visited = true; // Mark the end node as visited
     endNode.isPath = true; // Mark the start node as part of the path
     endNode.isObstacle = false; // Ensure the start node is not an obstacle 
     endNode.visited = false; // Ensure the end node is not visited
 
-    BreadthFirstSearch(startNode, endNode);
+    BreadthFirstSearch(startNode, endNode, _nodeVector);
 }
 
 void BFS::OnUpdate() const
 {
 }
 
-void BFS::OnRender() const
+void BFS::OnRender(std::vector<std::vector<Node*>>& _nodeVector) const
 {
     for(int x = 0; x < gridWidth; x++)
     {
@@ -48,7 +48,7 @@ void BFS::OnRender() const
         {
             // Render each node in the grid
             // draw obstacles and visited nodes
-            Node& currentNode = nodeVector->at(x).at(y);
+            Node& currentNode = *_nodeVector.at(x).at(y);
             Color color = WHITE; // Default color for nodes
 
             // tile is obstacle: Set tile color to black
@@ -95,9 +95,19 @@ void BFS::SetGridSize(int width, int height)
     gridHeight = height;
 }
 
-void BFS::BreadthFirstSearch(Node& _startNode, Node& _endNode)
+void BFS::BreadthFirstSearch(Node& _startNode, Node& _endNode, std::vector<std::vector<Node*>>& _nodeVector)
 {
-    ResetGrid(gridWidth, gridHeight, gridSize);
+    ResetGrid(gridWidth, gridHeight, gridSize, _nodeVector);
+
+    _startNode.visited = true; // Mark the start node as visited
+    _startNode.isPath = true; // Mark the start node as part of the path
+    _startNode.isObstacle = false; // Ensure the start node is not an obstacle   
+
+    // End Node
+    //endNode.visited = true; // Mark the end node as visited
+    _endNode.isPath = true; // Mark the start node as part of the path
+    _endNode.isObstacle = false; // Ensure the start node is not an obstacle 
+    _endNode.visited = false; // Ensure the end node is not visited
 
     // Implementation of the BFS algorithm
     // This function will be called to perform the BFS search starting from the given node
@@ -141,7 +151,7 @@ void BFS::BreadthFirstSearch(Node& _startNode, Node& _endNode)
 
         // Check if the adjacent nodes are within bounds
         if (n->position.x + 1 < gridWidth && n->position.y < gridHeight) {
-            Node& rightNode = nodeVector->at(n->position.x + 1).at(n->position.y);
+            Node& rightNode = *_nodeVector.at(n->position.x + 1).at(n->position.y);
             if (!rightNode.visited && !rightNode.isObstacle) {
                 rightNode.visited = true; // Mark the node as visited
                 rightNode.parent = n; // Set the parent node
@@ -151,7 +161,7 @@ void BFS::BreadthFirstSearch(Node& _startNode, Node& _endNode)
 
         // check if the adjacent nodes are within bounds
         if (n->position.x < gridWidth && n->position.y + 1 < gridHeight) {
-            Node& downNode = nodeVector->at(n->position.x).at(n->position.y + 1);
+            Node& downNode = *_nodeVector.at(n->position.x).at(n->position.y + 1);
             if (!downNode.visited && !downNode.isObstacle) {
                 downNode.visited = true; // Mark the node as visited
                 downNode.parent = n; // Set the parent node
@@ -160,7 +170,7 @@ void BFS::BreadthFirstSearch(Node& _startNode, Node& _endNode)
         }
 
         if (n->position.x - 1 >= 0 && n->position.y < gridHeight) {
-            Node& leftNode = nodeVector->at(n->position.x - 1).at(n->position.y);
+            Node& leftNode = *_nodeVector.at(n->position.x - 1).at(n->position.y);
             if (!leftNode.visited && !leftNode.isObstacle) {
                 leftNode.visited = true; // Mark the node as visited
                 leftNode.parent = n; // Set the parent node
@@ -168,7 +178,7 @@ void BFS::BreadthFirstSearch(Node& _startNode, Node& _endNode)
             }
         }
         if (n->position.x < gridWidth && n->position.y - 1 >= 0) {
-            Node& upNode = nodeVector->at(n->position.x).at(n->position.y - 1);
+            Node& upNode = *_nodeVector.at(n->position.x).at(n->position.y - 1);
             if (!upNode.visited && !upNode.isObstacle) {
                 upNode.visited = true; // Mark the node as visited
                 upNode.parent = n; // Set the parent node
@@ -179,41 +189,8 @@ void BFS::BreadthFirstSearch(Node& _startNode, Node& _endNode)
 } // end BredthFirstSearch
 
 
-void BFS::CreateRandomObstacles(int obstacleCount)
-{
-    
-    // Create random obstacles in the BFS grid
-    if (!nodeVector) {
-        TraceLog(LOG_WARNING, "nodeVector is null");
-        return; // Check if the node vector is initialized
-    }
 
-    // randomly select nodes to be obstacles
-    if (obstacleCount <= 0 || obstacleCount > gridWidth * gridHeight) {
-        TraceLog(LOG_WARNING, "Invalid obstacle count: %d", obstacleCount);
-        return; // Invalid obstacle count
-    }
-    
-    // for loop to create obstacles
-    for (int i = 0; i < obstacleCount; ++i) {
-        int x = GetRandomValue(0, gridWidth - 1);
-        int y = GetRandomValue(0, gridHeight - 1);
-        nodeVector.get()->at(x).at(y).isObstacle = true; // Mark the node as an obstacle
-    }
-}
 
-// Reset the grid to its initial state
-void BFS::ResetGrid(int _gridWidth, int _gridHeight, int _gridSize) {
-    for (int x = 0; x < _gridWidth; ++x) {
-        for (int y = 0; y < _gridHeight; ++y) {
-            Node& node = nodeVector->at(x).at(y);
-            node.gCost = FLT_MAX; // Your constructor already does this, but it's good practice
-            node.parent = nullptr;
-            node.visited = false;
-            node.isPath = false;
-        }
-    }
-}
 
 Vector2 BFS::GetNextWaypoint()
 {

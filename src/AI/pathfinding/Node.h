@@ -19,6 +19,6 @@ public:
     bool isPath = false; // Flag to check if the node is part of the path
     Node* parent; // Pointer to the parent node in the path
 
-    static void CreateNodeGrid(std::vector<std::vector<Node>>* _nodeVector, int width, int height);
+    static void CreateNodeGrid(std::vector<std::vector<Node*>>& _nodeVector, int width, int height);
 };
 

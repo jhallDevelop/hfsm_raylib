@@ -3,24 +3,21 @@
 #include "Node.h"
 class BFS : public Pathfinding {
 public:
-    BFS(int _gridWidth, int _gridHeight, int _gridSize);
+    BFS(int _gridWidth, int _gridHeight, int _gridSize, std::vector<std::vector<Node*>>& _nodeVector);
     ~BFS() override;
 
-    void OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2]) override;
+    void OnStart(int _nodeIndexStart[2], int _nodeIndexEnd[2], std::vector<std::vector<Node*>>& _nodeVector) override;
     void OnUpdate() const override;
-    void OnRender() const override;
+    void OnRender(std::vector<std::vector<Node*>>& _nodeVector) const override;
     void OnEnd() override;
     int GetGridWidth() const;
     int GetGridHeight() const;
     void SetGridSize(int width, int height);
-    void CreateRandomObstacles(int obstacleCount) override;
-    void BreadthFirstSearch(Node& _startNode, Node& _endNode);
-    void ResetGrid(int _gridWidth, int _gridHeight, int _gridSize) override;
+    void BreadthFirstSearch(Node& _startNode, Node& _endNode, std::vector<std::vector<Node*>>& _nodeVector);
     Vector2 GetNextWaypoint() override;
     void AdvanceToNextWaypoint() override; // Method to advance to the next waypoint in the path
     
 private:
-    std::unique_ptr<std::vector<std::vector<Node>>> nodeVector;
     std::vector<Node*> finalPath; // ADD THIS: To store the calculated path
     int gridWidth = 10;  // Example width
     int gridHeight = 10; // Example height
