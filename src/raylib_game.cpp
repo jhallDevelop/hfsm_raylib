@@ -352,12 +352,7 @@ void GameUpdate()
     BeginDrawing(); // Raylib function to start drawing
     ClearBackground(RAYWHITE);  // Raylib function to clear the background
 
-    // --- LOGIC PHASE 2: AI (with Debug Drawing) ---
-    // The AI calculates its force and can draw debug visuals.
-    // This must happen before the physics update.
-    //gameData.get()->enemyAIStateMachine->Update(*gameData.get()->enemyPawn, *gameData.get()->playerPawn);
-
-    // --- LOGIC PHASE 3: PHYSICS ---
+    // --- PHYSICS ---
     // Now that all forces for this frame are known (from Input and AI),
     // we apply them to update the pawn positions and velocities.
     // This must happen after AI and before the final render.
