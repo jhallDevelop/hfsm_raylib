@@ -46,8 +46,6 @@ enum PathfindingType {
 // Assets
 const char* FONT_FILE_PATH = "resources/mecha.png"; // Font file path
 
-// store the pathfinding algorithms
-
 
 // Game Data containing Pawns & AI State Machine
 typedef struct GameData {
@@ -56,6 +54,7 @@ typedef struct GameData {
     std::unique_ptr<AI_HSFM> enemyAIStateMachine; // AI state machine
     std::unique_ptr<Weapon> playerWeapon; // Player's weapon
     std::unique_ptr<Weapon> enemyWeapon; // Enemy's weapon (if needed)
+    
     // Pathfinding
     std::shared_ptr<Pathfinding> pathfinding; // Pathfinding algorithm (if needed)
     std::shared_ptr<Pathfinding> aStarPathfinding;
@@ -68,6 +67,8 @@ typedef struct GameData {
     PathfindingType pathFindingType;
     std::unique_ptr<Pawn> pathfindingTarget; // Target for pathfinding (if needed)
     int gridSize[2]; // Size of each node in the grid
+    int gridWidth; // Width of the grid in nodes
+    int gridHeight; // Height of the grid in nodes
 } GameData;
 std::unique_ptr<GameData> gameData;
 //----------------------------------------------------------------------------------
@@ -136,27 +137,34 @@ int main(void)
 
     // ==============  Pathfinding  ================
     std::vector<std::vector<Node*>>& nodeVector = *gameData.get()->nodeVector.get();
+
+    // Initialize the node grid
+    gameData.get()->gridWidth = (int)SCREEN_WIDTH/GRID_SIZE;
+    gameData.get()->gridHeight = (int)SCREEN_HEIGHT/GRID_SIZE;
+
+    // Create the node grid
+    Node::CreateNodeGrid(nodeVector, gameData.get()->gridWidth,  gameData.get()->gridHeight);
+
     // create all the pathfinding algorithms
-    gameData.get()->bfsPathfinding = std::make_unique<BFS>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE, nodeVector);
-    gameData.get()->dfsPathfinding = std::make_unique<DFS>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE, nodeVector);
-    gameData.get()->diykstraPathfinding = std::make_unique<Diykstra>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE, nodeVector);
-    gameData.get()->aStarPathfinding = std::make_unique<AStar>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE, nodeVector);
+    gameData.get()->bfsPathfinding = std::make_shared<BFS>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE, nodeVector);
+    gameData.get()->dfsPathfinding = std::make_shared<DFS>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE, nodeVector);
+    gameData.get()->diykstraPathfinding = std::make_shared<Diykstra>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE, nodeVector);
+    gameData.get()->aStarPathfinding = std::make_shared<AStar>(SCREEN_WIDTH/GRID_SIZE, SCREEN_HEIGHT/GRID_SIZE, GRID_SIZE, nodeVector);
+    
+    // Set the initial pathfinding algorithm to BFS
     gameData.get()->pathFindingType = PathfindingType::BFS_TYPE;
     SwapToPathfindingAlgorithm(*gameData, gameData.get()->pathFindingType); // Swap to the A* pathfinding algorithm
     
-    std::cout << "Pathfinding algorithm initialized." << std::endl;
-    Pathfinding* pathfinding = gameData->pathfinding.get();
-    if (pathfinding == nullptr) {
-        TraceLog(LOG_ERROR, "Failed to cast pathfinding to pathfinding");
-        return -1; // Exit if casting fails
-    }
 
     // pick a random start and end node for the pathfinding algorithm
     int startNodeIndex[2] = { (int)(playerPawn->GetPosition().x/GRID_SIZE), (int)(playerPawn->GetPosition().y/GRID_SIZE)};
     int endNodeIndex[2] = { (int)(enemyPawn->GetPosition().x/GRID_SIZE), (int)(enemyPawn->GetPosition().y/GRID_SIZE)};
+    
+    // Get a reference to the current pathfinding algorithm
+    Pathfinding* pathfinding = gameData.get()->pathfinding.get(); // Get the current pathfinding algorithm
     pathfinding->OnStart(startNodeIndex, endNodeIndex, nodeVector); // Initialize the pathfinding algorithm
 
-    pathfinding->CreateRandomObstacles(nodeVector, (int)SCREEN_WIDTH/GRID_SIZE, (int)SCREEN_HEIGHT/GRID_SIZE, randomObstacleCount); // Create random obstacles in the grid
+    pathfinding->CreateRandomObstacles(nodeVector, gameData.get()->gridWidth, gameData.get()->gridHeight, randomObstacleCount); // Create random obstacles in the grid
     
     
 

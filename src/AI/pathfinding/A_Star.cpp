@@ -3,8 +3,7 @@
 #include <iostream>
 AStar::AStar(int _gridWidth, int _gridHeight, int _gridSize, std::vector<std::vector<Node*>>& _nodeVector) : gridWidth(_gridWidth), gridHeight(_gridHeight), gridSize(_gridSize)
 {
-    // Initialize the node grid
-    Node::CreateNodeGrid(_nodeVector, gridWidth, gridHeight);
+    
 }
 
 AStar::~AStar()
@@ -53,8 +52,13 @@ void AStar::OnRender(std::vector<std::vector<Node*>>& _nodeVector) const
                 color = LIGHTGRAY;
             } 
 
+            if(currentNode.traversalCost > 1.0f) {
+                // If the node has a traversal cost greater than 1, set it to a different color
+                color = BROWN; // Color for hard-to-traverse nodes
+            }
+
             // Tile is Visited: Set tile color to light grey
-            if(currentNode.visited && !currentNode.isObstacle) {
+            if(currentNode.visited && !currentNode.isObstacle && !currentNode.traversalCost > 1.0f) {
                 color = BLUE;
             }
 
@@ -200,7 +204,7 @@ void AStar::AStarSearch(Node &_startNode, Node &_endNode, std::vector<std::vecto
 }
 
 void AStar::UpdateNeighbourCost(Node& _lowestGCostNode, Node& _neighbour, Node& _endNode, std::vector<Node*>& _openSet){
-    float newGCost = _lowestGCostNode.gCost + 1.0f; // Assuming a cost of 1 for moving to an adjacent node
+    float newGCost = _lowestGCostNode.gCost + _neighbour.traversalCost; // Assuming a cost of 1 for moving to an adjacent node
     
     if (newGCost < _neighbour.gCost) {
         _neighbour.parent = &_lowestGCostNode; // Set the parent node

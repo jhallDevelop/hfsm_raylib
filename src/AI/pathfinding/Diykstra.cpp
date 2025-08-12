@@ -50,12 +50,17 @@ void Diykstra::OnRender(std::vector<std::vector<Node*>>& _nodeVector) const
 
             // tile is obstacle: Set tile color to black
             if (currentNode.isObstacle == true) {
-                color = BLACK;
+                color = LIGHTGRAY;
             } 
+
+            if(currentNode.traversalCost > 1.0f) {
+                // If the node has a traversal cost greater than 1, set it to a different color
+                color = BROWN; // Color for hard-to-traverse nodes
+            }
 
             // Tile is Visited: Set tile color to light grey
             if(currentNode.visited && !currentNode.isObstacle) {
-                color = LIGHTGRAY;
+                color = BLUE;
             }
 
             // Tile is Path: Set tile color to green
@@ -105,10 +110,6 @@ void Diykstra::DijkstraSearch(Node &_startNode, Node &_endNode, std::vector<std:
     while(!openSet.empty())
     {
         // add a slight delay for visualization purposes
-        //WaitTime(0.1f); // Uncomment if you want to add a delay for visualization
-        //WaitTime(0.01f);
-        // Node n = RemoveQ(queue);
-        // Node* n = openSet.front(); // Get the front node from the queue
 
         // find the node with the lowest gCost
         int lowestGCostNodeIndex = 0;
@@ -184,7 +185,7 @@ void Diykstra::DijkstraSearch(Node &_startNode, Node &_endNode, std::vector<std:
 }
 
 void Diykstra::UpdateNeighbourCost(Node& _lowestGCostNode, Node& _neighbour,std::vector<Node*>& _openSet){
-    float newGCost = _lowestGCostNode.gCost + 1.0f; // Assuming a cost of 1 for moving to an adjacent node
+    float newGCost = _lowestGCostNode.gCost + _neighbour.traversalCost; // Assuming a cost of 1 for moving to an adjacent node
     if (newGCost < _neighbour.gCost) {
         _neighbour.gCost = newGCost; // Update the gCost
         _neighbour.parent = &_lowestGCostNode; // Set the parent node

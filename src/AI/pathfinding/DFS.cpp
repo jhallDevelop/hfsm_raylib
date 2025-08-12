@@ -52,12 +52,12 @@ void DFS::OnRender(std::vector<std::vector<Node*>>& _nodeVector) const
 
             // tile is obstacle: Set tile color to black
             if (currentNode.isObstacle == true) {
-                color = BLACK;
+                color = LIGHTGRAY;
             } 
 
             // Tile is Visited: Set tile color to light grey
             if(currentNode.visited && !currentNode.isObstacle) {
-                color = LIGHTGRAY;
+                color = BLUE;
             }
 
             // Tile is Path: Set tile color to green

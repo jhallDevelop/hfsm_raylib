@@ -31,4 +31,12 @@ void Pathfinding::CreateRandomObstacles(std::vector<std::vector<Node*>>& _nodeVe
         int y = GetRandomValue(0, _gridHeight - 1);
         _nodeVector.at(x).at(y)->isObstacle = true; // Mark the node as an obstacle
     }
+
+    // for loop to create hard to traverse obstacles
+    for (int i = 0; i < _obstacleCount; ++i) {
+        int x = GetRandomValue(0, _gridWidth - 1);
+        int y = GetRandomValue(0, _gridHeight - 1);
+        float randomCost = 2.0f; // Random cost between 2 and 5
+        _nodeVector.at(x).at(y)->traversalCost = randomCost; // Mark the node as an obstacle
+    }
 }
