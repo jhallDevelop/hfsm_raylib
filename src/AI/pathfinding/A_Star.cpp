@@ -58,7 +58,7 @@ void AStar::OnRender(std::vector<std::vector<Node*>>& _nodeVector) const
             }
 
             // Tile is Visited: Set tile color to light grey
-            if(currentNode.visited && !currentNode.isObstacle && !currentNode.traversalCost > 1.0f) {
+            if(currentNode.visited && !currentNode.isObstacle && (currentNode.traversalCost < 2.0f)) {
                 color = BLUE;
             }
 
